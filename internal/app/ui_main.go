@@ -13,7 +13,7 @@ const (
 	colCheck   float32 = 34
 	colName    float32 = 200
 	colActions float32 = 72
-	rowHeight  float32 = 44
+	rowHeight  float32 = 34
 )
 
 func (a *App) mainView(c *ui.Context) {
@@ -76,9 +76,6 @@ func (a *App) mainHeader(c *ui.Context) {
 			})
 		})
 		ui.Row(c).Gap(7).AlignItems(ui.Center).Children(func() {
-			a.button(c, "批量编辑", iconFileEdit, buttonSecondary, true, func() {
-				a.openBatch("")
-			})
 			a.button(c, "新建变量", iconPlus, buttonPrimary, true, func() {
 				a.openCreate("")
 			})
@@ -563,10 +560,7 @@ func (a *App) valueCell(c *ui.Context, v Variable, index int) {
 		if expanded {
 			ui.Text(c, "收起条目列表").FontSize(12).TextColor(p.text3).SingleLine()
 		} else {
-			a.richValue(c, entries[0], a.query, 12, p.text2, 1).Grow(1).MinWidth(0)
-			if len(entries) > 1 {
-				ui.Textf(c, "+%d", len(entries)-1).FontSize(10.5).TextColor(p.text3)
-			}
+			a.richValue(c, strings.Join(entries, " ; "), a.query, 12, p.text2, 1).Grow(1).MinWidth(0)
 		}
 	})
 	if toggle.Clicked() {
@@ -587,11 +581,8 @@ func (a *App) entriesPanel(c *ui.Context, v Variable) {
 	ui.Column(c).FillWidth().Radius(7).Background(p.surface2).Border(1, p.line).Padding(4).Children(func() {
 		ui.Row(c).Padding(0, 6, 3, 6).AlignItems(ui.Center).Children(func() {
 			ui.Textf(c, "%d 个条目 · 以 ; 分隔", len(entries)).FontSize(9).TextColor(p.text3).Grow(1)
-			a.textButton(c, "整段粘贴", true, func() {
+			a.textButton(c, "整段编辑", true, func() {
 				a.openBatch(v.Name)
-			})
-			a.textButton(c, "在列表中编辑", true, func() {
-				a.openEdit(v, true)
 			})
 		})
 		for i, entry := range entries {

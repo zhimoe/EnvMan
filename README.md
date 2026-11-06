@@ -1,20 +1,22 @@
 # EnvMan
 
 一个紧凑、原生的 Windows 环境变量管理工具。界面使用
-[MyGo](https://github.com/egoist/mygo) native UI，以 Go 绘制，不使用
-WebView、HTML、CSS 或 JavaScript。
+[MyGo](https://github.com/egoist/mygo) native UI 绘制，不依赖 WebView、
+HTML、CSS 或 JavaScript。
 
-## 已实现
+![EnvMan 界面截图](doc/screenshot.png)
 
-- 同时浏览用户变量和系统变量，显示同名覆盖关系。
-- 搜索、排序、键盘导航、批量选择、复制和 `.env` 导出。
-- PATH 等多值变量逐条展开、列表编辑、排序和整段粘贴。
-- 批量粘贴实时显示新增、移除、重复及顺序变化。
-- 直接读写 Windows 注册表，不使用会截断长值的 `setx`。
-- 系统变量写入前通过 UAC 以管理员身份重新启动。
-- 每次写入前自动备份，保留最近 20 份，支持恢复和撤销。
-- 浅色、深色和跟随系统三种主题，原生高 DPI 渲染。
-- 保存时保留其他程序在 EnvMan 打开期间新增或修改的无关变量。
+## 特性
+
+- **双范围浏览**：同时查看用户变量与系统变量，并标记同名覆盖关系。
+- **快速定位**：搜索、排序、键盘导航、批量选择、复制与 `.env` 导出。
+- **多值变量**：PATH 等 `;` 分隔变量可逐条展开，支持列表编辑、排序与整段编辑。
+- **实时差异**：整段编辑时实时显示新增、移除、重复及顺序变化，附带行号。
+- **直接写注册表**：读写 Windows 注册表，不使用会截断长值的 `setx`。
+- **按需提权**：查看与导出系统变量无需权限；只有实际写入时才通过 UAC 提权。
+- **自动备份**：每次写入前自动备份，保留最近 20 份，支持恢复与撤销。
+- **并发安全**：保存时保留其他程序在 EnvMan 打开期间新增或修改的无关变量。
+- **主题与高 DPI**：浅色、深色、跟随系统三种主题，原生高 DPI 渲染。
 
 ## 开发
 
@@ -30,14 +32,14 @@ go test ./...
 go vet ./...
 go tool mygo vet .
 
-# 构建 Windows x64 和 ARM64 可执行文件及安装器
-go tool mygo build -platform windows/amd64,windows/arm64 .
+# 构建 Windows x64 可执行文件及安装器
+go tool mygo build -platform windows/amd64 .
 ```
 
-构建产物位于 `build/windows-amd64/` 和 `build/windows-arm64/`：
+构建产物位于 `build/windows-amd64/`：
 
 - `EnvMan.exe`
-- `envman-setup-<version>-<arch>.exe`
+- `envman-setup-<version>-amd64.exe`
 
 Go 1.14 及之后的工具链在存在 `vendor/` 时会自动使用它。也可以显式进行离线校验：
 

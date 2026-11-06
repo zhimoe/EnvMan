@@ -137,10 +137,10 @@ func (a *App) sidebarWidth(c *ui.Context) float32 {
 	w, _ := c.Size()
 	switch {
 	case w < 1000:
-		return 184
+		return 158
 	case w < 1120:
-		return 200
+		return 172
 	default:
-		return 214
+		return 184
 	}
 }

@@ -237,7 +237,7 @@ func (a *App) batchView(c *ui.Context) {
 			if w > 1020 {
 				ui.Row(c).MarginStart(5).Gap(5).AlignItems(ui.Center).Children(func() {
 					ui.Icon(c, iconInfo).Size(11, 11).TextColor(p.text3)
-					ui.Text(c, "直接粘贴完整值 · 支持 ; 与换行分隔").FontSize(9.5).TextColor(p.text3).SingleLine()
+					ui.Text(c, "每行一个条目 · 支持 ; 与换行分隔").FontSize(9.5).TextColor(p.text3).SingleLine()
 				})
 			}
 			ui.Spacer(c).Grow(1)
@@ -254,25 +254,26 @@ func (a *App) batchView(c *ui.Context) {
 			ui.Column(c).Grow(1.12).Basis(0).FillHeight().Background(p.surface).Children(func() {
 				ui.Row(c).Height(38).FillWidth().Padding(0, 13).BorderWidth(0, 0, 1, 0).BorderColor(p.lineSoft).
 					AlignItems(ui.Center).Gap(8).Children(func() {
-					ui.Text(c, "粘贴完整值").FontSize(10.5).FontWeight(600).TextColor(p.text2)
 					ui.Textf(c, "当前 %d 个条目", len(splitValue(b.originalValue))).FontSize(9.5).TextColor(p.text3)
 					ui.Spacer(c).Grow(1)
-					a.quietButton(c, "粘贴", iconPaste, true, func() {
-						text := c.ReadClipboard()
-						if strings.TrimSpace(text) == "" {
-							a.toast("剪贴板为空")
-							return
-						}
-						b.text = text
-					})
 					a.quietButton(c, "整理为多行", iconList, true, func() {
 						b.text = strings.Join(entries, "\n")
 					})
 				})
-				ui.Box(c).Grow(1).FillWidth().Padding(11, 13).Children(func() {
-					ui.TextArea(c, &b.text).Grow(1).FillWidth().Font(monoFont).FontSize(12).
-						Placeholder("C:\\Program Files\\Tool\\bin\nC:\\Users\\Ada\\.local\\bin\nC:\\Windows\\System32").
-						Label("粘贴变量值").AutoFocus()
+				ui.Scroll(c).Grow(1).FillWidth().Padding(11, 13).Children(func() {
+					lineCount := strings.Count(b.text, "\n") + 1
+					ui.Row(c).AlignItems(ui.Start).FillWidth().Background(p.surface).Border(1, p.line).Radius(8).
+						Padding(7, 10).Clip().Children(func() {
+						ui.Column(c).Width(30).Gap(0).Children(func() {
+							for i := 1; i <= lineCount; i++ {
+								ui.Textf(c, "%d", i).Font(monoFont).FontSize(12).FixedLineHeight(18).
+									Height(18).Width(30).TextColor(p.text3).TextAlign(ui.End).Padding(0, 0, 6, 0)
+							}
+						})
+						ui.TextAreaBase(c, &b.text).Grow(1).Font(monoFont).FontSize(12).FixedLineHeight(18).NoWrap().
+							Placeholder("C:\\Program Files\\Tool\\bin\nC:\\Users\\Ada\\.local\\bin\nC:\\Windows\\System32").
+							Label("编辑变量值").AutoFocus()
+					})
 				})
 				ui.Row(c).Height(33).FillWidth().Padding(0, 13).BorderWidth(1, 0, 0, 0).BorderColor(p.lineSoft).
 					AlignItems(ui.Center).Children(func() {
