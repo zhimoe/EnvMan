@@ -32,14 +32,18 @@ go test ./...
 go vet ./...
 go tool mygo vet .
 
-# 构建 Windows x64 可执行文件及安装器
-go tool mygo build -platform windows/amd64 .
+# 构建免安装的 Windows x64 可执行文件（不生成安装器）
+./scripts/build-windows-portable.sh
 ```
 
-构建产物位于 `build/windows-amd64/`：
+免安装构建产物位于 `build/portable/windows-amd64/`。发布时保留该目录中的
+`EnvMan.exe` 和资源文件。
 
-- `EnvMan.exe`
-- `envman-setup-<version>-amd64.exe`
+如需同时生成安装器，可直接运行：
+
+```sh
+go tool mygo build -platform windows/amd64 .
+```
 
 Go 1.14 及之后的工具链在存在 `vendor/` 时会自动使用它。也可以显式进行离线校验：
 
