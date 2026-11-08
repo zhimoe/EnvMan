@@ -458,41 +458,52 @@ func (a *App) variableRow(c *ui.Context, v Variable, index int) {
 					if edit.Clicked() {
 						a.openEdit(v, false)
 					}
-					more := a.iconButtonBase(c, iconMore, "更多操作", 25)
-					if more.Hovered() {
-						more.Background(p.surface3)
-					}
-					more.PopoverMenuButton(func(m *ui.Menu) {
-						if m.Item("编辑").Shortcut(0, ui.KeyEnter).Chosen() {
-							a.openEdit(v, false)
+					actionEls = append(actionEls, edit)
+					// The List reuses Accent/AccentText to hide its own selection
+					// highlight; restore the real accent colors so popover menu
+					// items stay readable when highlighted.
+					menuTheme := *c.Theme()
+					menuTheme.Accent = p.accent
+					menuTheme.AccentHover = p.accentHover
+					menuTheme.AccentPressed = p.accentPress
+					menuTheme.AccentText = p.accentText
+					ui.Themed(c, &menuTheme).Background(ui.Transparent).Children(func() {
+						more := a.iconButtonBase(c, iconMore, "更多操作", 25)
+						if more.Hovered() {
+							more.Background(p.surface3)
 						}
-						if isBatchEditable(v) && m.Item("批量编辑值").Chosen() {
-							a.openBatch(v.Name)
-						}
-						if isMultiValue(v.Value) {
-							label := "展开条目"
-							if a.isExpanded(a.scope, v.Name) {
-								label = "收起条目"
+						more.PopoverMenuButton(func(m *ui.Menu) {
+							if m.Item("编辑").Shortcut(0, ui.KeyEnter).Chosen() {
+								a.openEdit(v, false)
 							}
-							if m.Item(label).Chosen() {
-								a.toggleExpanded(a.scope, v.Name)
+							if isBatchEditable(v) && m.Item("批量编辑值").Chosen() {
+								a.openBatch(v.Name)
 							}
-						}
-						m.Separator()
-						if m.Item("复制值").Chosen() {
-							c.WriteClipboard(v.Value)
-							a.toast("已复制变量值")
-						}
-						if m.Item("复制 KEY=VALUE").Chosen() {
-							c.WriteClipboard(v.Name + "=" + v.Value)
-							a.toast("已复制 KEY=VALUE")
-						}
-						m.Separator()
-						if m.Item("删除变量").Chosen() {
-							a.confirmDelete([]Variable{v})
-						}
+							if isMultiValue(v.Value) {
+								label := "展开条目"
+								if a.isExpanded(a.scope, v.Name) {
+									label = "收起条目"
+								}
+								if m.Item(label).Chosen() {
+									a.toggleExpanded(a.scope, v.Name)
+								}
+							}
+							m.Separator()
+							if m.Item("复制值").Chosen() {
+								c.WriteClipboard(v.Value)
+								a.toast("已复制变量值")
+							}
+							if m.Item("复制 KEY=VALUE").Chosen() {
+								c.WriteClipboard(v.Name + "=" + v.Value)
+								a.toast("已复制 KEY=VALUE")
+							}
+							m.Separator()
+							if m.Item("删除变量").Chosen() {
+								a.confirmDelete([]Variable{v})
+							}
+						})
+						actionEls = append(actionEls, more)
 					})
-					actionEls = append(actionEls, edit, more)
 				})
 			})
 			if isMultiValue(v.Value) && a.isExpanded(a.scope, v.Name) {
@@ -554,14 +565,14 @@ func (a *App) valueCell(c *ui.Context, v Variable, index int) {
 				chev.Rotate(90)
 			}
 		})
+		if expanded {
+			ui.Text(c, "收起条目列表").FontSize(12).TextColor(p.text3).SingleLine().Grow(1)
+		} else {
+			a.richValue(c, strings.Join(entries, ";"), a.query, 12, p.text2, 1).Grow(1).MinWidth(0)
+		}
 		ui.Row(c).Padding(1.5, 5).Radius(99).Background(p.surface2).Border(1, p.line).Children(func() {
 			ui.Textf(c, "%d 项", len(entries)).FontSize(9).FontWeight(600).TextColor(p.text3)
 		})
-		if expanded {
-			ui.Text(c, "收起条目列表").FontSize(12).TextColor(p.text3).SingleLine()
-		} else {
-			a.richValue(c, strings.Join(entries, " ; "), a.query, 12, p.text2, 1).Grow(1).MinWidth(0)
-		}
 	})
 	if toggle.Clicked() {
 		a.toggleExpanded(a.scope, v.Name)

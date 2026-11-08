@@ -107,7 +107,7 @@ func (a *App) sheetView(c *ui.Context) {
 		back := ui.Row(c).Absolute().Left(0).Top(42).Right(0).Bottom(0).Justify(ui.End).
 			Background(ui.RGBA(0, 0, 0, 0.32)).Modal()
 		back.Children(func() {
-			panel := ui.Column(c).Width(430).FillHeight().Background(p.surface).
+			panel := ui.Column(c).Width(490).FillHeight().Background(p.surface).
 				BorderWidth(0, 1, 0, 0).BorderColor(p.line).
 				Role(ui.RoleDialog).Label("变量编辑")
 			panel.Children(func() {
@@ -281,12 +281,12 @@ func (a *App) sheetInfoRow(c *ui.Context, label, value string) {
 
 func (a *App) sheetValueList(c *ui.Context, s *sheetState) {
 	p := a.pal
-	ui.Column(c).FillWidth().Radius(9).Background(p.surface2).Border(1, p.line).Padding(5).Children(func() {
-		for i := range s.entries {
+	ui.Column(c).FillWidth().Radius(9).Background(p.surface2).Border(1, p.line).Padding(2).Children(func() {
+		for i := 0; i < len(s.entries); i++ {
 			i := i
-			row := ui.Row(c).Height(32).FillWidth().Radius(5).Padding(0, 3).Gap(3).AlignItems(ui.Center)
+			row := ui.Row(c).Height(32).FillWidth().Radius(5).Padding(0, 1).Gap(2).AlignItems(ui.Center)
 			row.Children(func() {
-				ui.Textf(c, "%02d", i+1).Font(monoFont).FontSize(9).TextColor(p.text3).Width(24).TextAlign(ui.End)
+				ui.Textf(c, "%02d", i+1).Font(monoFont).FontSize(9).TextColor(p.text3).Width(20).TextAlign(ui.End)
 				ui.TextInput(c, &s.entries[i]).Height(27).Font(monoFont).FontSize(11.5).
 					Label(fmt.Sprintf("条目 %d", i+1)).Grow(1)
 				up := a.iconButtonBase(c, iconChevronDown, "上移", 18)

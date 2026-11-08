@@ -3,8 +3,31 @@ package app
 import (
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/egoist/mygo/ui"
+)
+
+// Measurements of the batch editor's text pane. They are shared by the
+// layout and by the width computation below, so the text pane fills the
+// viewport exactly when its longest line fits.
+const (
+	batchEditorFont     float32 = 12
+	batchEditorLine     float32 = 18
+	batchGutterWidth    float32 = 22
+	batchGutterGap      float32 = 6
+	batchBoxPadV        float32 = 6
+	batchBoxPadH        float32 = 2
+	batchBoxBorder      float32 = 1
+	batchBodyPadV       float32 = 12
+	batchBodyPadH       float32 = 13
+	batchDividerWidth   float32 = 1
+	batchLeftFlex       float32 = 1.12
+	batchRightFlex      float32 = 0.88
+	batchTitleBarHeight float32 = 42
+	batchHeadHeight     float32 = 52
+	batchPaneHeadHeight float32 = 38
+	batchPaneFootHeight float32 = 33
 )
 
 type batchInfo struct {
@@ -260,19 +283,30 @@ func (a *App) batchView(c *ui.Context) {
 						b.text = strings.Join(entries, "\n")
 					})
 				})
-				ui.Scroll(c).Grow(1).FillWidth().Padding(11, 13).Children(func() {
+				ui.Column(c).Grow(1).FillWidth().Padding(batchBodyPadV, batchBodyPadH).Children(func() {
 					lineCount := strings.Count(b.text, "\n") + 1
-					ui.Row(c).AlignItems(ui.Start).FillWidth().Background(p.surface).Border(1, p.line).Radius(8).
-						Padding(7, 10).Clip().Children(func() {
-						ui.Column(c).Width(30).Gap(0).Children(func() {
-							for i := 1; i <= lineCount; i++ {
-								ui.Textf(c, "%d", i).Font(monoFont).FontSize(12).FixedLineHeight(18).
-									Height(18).Width(30).TextColor(p.text3).TextAlign(ui.End).Padding(0, 0, 6, 0)
-							}
+					textWidth, textHeight := a.batchEditorViewport(c)
+					textWidth = a.batchEditorTextWidth(c, b.text)
+					ui.Box(c).Grow(1).FillWidth().Background(p.surface).Border(1, p.line).Radius(8).Clip().Children(func() {
+						ui.Scroll(c).Grow(1).FillWidth().Children(func() {
+							ui.Row(c).FillWidth().AlignItems(ui.Start).
+								Gap(batchGutterGap).Padding(batchBoxPadV, batchBoxPadH).Children(func() {
+								ui.Column(c).Width(batchGutterWidth).Gap(0).Children(func() {
+									for i := 1; i <= lineCount; i++ {
+										ui.Textf(c, "%d", i).Font(monoFont).FontSize(batchEditorFont).
+											FixedLineHeight(batchEditorLine).Height(batchEditorLine).
+											Width(batchGutterWidth).TextColor(p.text3).TextAlign(ui.End)
+									}
+								})
+								ui.ScrollHorizontal(c).Grow(1).Children(func() {
+									ui.TextAreaBase(c, &b.text).Width(textWidth).MinHeight(textHeight).
+										Font(monoFont).FontSize(batchEditorFont).
+										FixedLineHeight(batchEditorLine).NoWrap().
+										Placeholder("C:\\Program Files\\Tool\\bin\nC:\\Users\\Ada\\.local\\bin\nC:\\Windows\\System32").
+										Label("编辑变量值").AutoFocus()
+								})
+							})
 						})
-						ui.TextAreaBase(c, &b.text).Grow(1).Font(monoFont).FontSize(12).FixedLineHeight(18).NoWrap().
-							Placeholder("C:\\Program Files\\Tool\\bin\nC:\\Users\\Ada\\.local\\bin\nC:\\Windows\\System32").
-							Label("编辑变量值").AutoFocus()
 					})
 				})
 				ui.Row(c).Height(33).FillWidth().Padding(0, 13).BorderWidth(1, 0, 0, 0).BorderColor(p.lineSoft).
@@ -295,7 +329,7 @@ func (a *App) batchView(c *ui.Context) {
 					ui.Spacer(c).Grow(1)
 					ui.Textf(c, "%s · %d → %d 项", b.target, len(info.original), len(entries)).FontSize(9).TextColor(p.text3).SingleLine()
 				})
-				ui.Scroll(c).Grow(1).Padding(7, 9, 14, 9).Children(func() {
+				ui.Scroll(c).Grow(1).Padding(6, 4, 14, 6).Children(func() {
 					a.batchStats(c, info)
 					if len(entries) == 0 && len(info.original) > 0 {
 						a.batchCallout(c, iconAlert, p.dangerSoft, p.danger, "应用后此变量的值为空。")
@@ -371,7 +405,7 @@ func (a *App) batchEntry(c *ui.Context, index int, text string, added, removed b
 	bg := p.surface
 	border := p.line
 	fg := p.text2
-	mark := "·"
+	mark := ""
 	if added {
 		bg = p.successSoft
 		border = p.successSoft
@@ -384,12 +418,57 @@ func (a *App) batchEntry(c *ui.Context, index int, text string, added, removed b
 		fg = p.danger
 		mark = "−"
 	}
-	ui.Row(c).FillWidth().Margin(0, 0, 3, 0).Padding(5, 6).Radius(6).Background(bg).Border(1, border).
-		AlignItems(ui.Start).Gap(4).Children(func() {
-		ui.Textf(c, "%02d", index).Font(monoFont).FontSize(8.5).TextColor(p.text3).Width(24).TextAlign(ui.End)
-		ui.Text(c, mark).Font(monoFont).FontSize(11).TextColor(fg).Width(13).TextAlign(ui.Center)
+	ui.Row(c).FillWidth().Margin(0, 0, 3, 0).Padding(4, 3).Radius(6).Background(bg).Border(1, border).
+		AlignItems(ui.Center).Gap(3).Children(func() {
+		ui.Textf(c, "%02d", index).Font(monoFont).FontSize(8.5).TextColor(p.text3).Width(16).TextAlign(ui.End)
+		if mark != "" {
+			ui.Text(c, mark).Font(monoFont).FontSize(11).TextColor(fg).Width(10).TextAlign(ui.Center)
+		}
 		ui.Text(c, text).Font(monoFont).FontSize(10.5).TextColor(fg).Grow(1).MinWidth(0)
 	})
+}
+
+// batchEditorTextWidth returns how wide the batch editor's text pane is: as
+// wide as its widest line, but filling the viewport when that fits.
+func (a *App) batchEditorTextWidth(c *ui.Context, text string) float32 {
+	viewport, _ := a.batchEditorViewport(c)
+	widest, widestRunes := "", 0
+	for line := range strings.SplitSeq(text, "\n") {
+		if n := utf8.RuneCountInString(line); n > widestRunes {
+			widest, widestRunes = line, n
+		}
+	}
+	if widest == "" {
+		return viewport
+	}
+	w, _ := c.MeasureText(0, ui.Span{Text: widest, Font: monoFont, Size: batchEditorFont})
+	if w += 12; w < viewport {
+		return viewport
+	}
+	return w
+}
+
+// batchEditorViewport estimates the space the batch editor's text pane gets,
+// from the window's size and the measurements of the pane around it, so that
+// the pane fills it: the text pane scrolls sideways only as long as a line
+// is wider than this, and is as tall as this at least.
+func (a *App) batchEditorViewport(c *ui.Context) (width, height float32) {
+	w, h := c.Size()
+	titleBar := c.TitleBar().Height
+	if titleBar < batchTitleBarHeight {
+		titleBar = batchTitleBarHeight
+	}
+	left := (w - batchDividerWidth) * batchLeftFlex / (batchLeftFlex + batchRightFlex)
+	width = left - 2*batchBodyPadH - 2*batchBoxBorder - 2*batchBoxPadH - batchGutterWidth - batchGutterGap
+	height = h - titleBar - batchHeadHeight - batchPaneHeadHeight - batchPaneFootHeight -
+		2*batchBodyPadV - 2*batchBoxBorder - 2*batchBoxPadV
+	if width < 120 {
+		width = 120
+	}
+	if floor := 3 * batchEditorLine; height < floor {
+		height = floor
+	}
+	return width, height
 }
 
 func (a *App) applyBatch(c *ui.Context) {
