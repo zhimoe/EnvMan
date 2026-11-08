@@ -10,8 +10,7 @@ cd "$project_dir"
 go tool mygo build \
   -platform windows/amd64 \
   -skip-installer \
-  -o build/portable \
-  .
+  -o build .
 
 printf '\nPortable output: %s\n' \
   "$project_dir/build/portable/windows-amd64"
