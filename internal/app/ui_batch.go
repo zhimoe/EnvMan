@@ -287,7 +287,7 @@ func (a *App) batchView(c *ui.Context) {
 					lineCount := strings.Count(b.text, "\n") + 1
 					textWidth, textHeight := a.batchEditorViewport(c)
 					textWidth = a.batchEditorTextWidth(c, b.text)
-					ui.Box(c).Grow(1).FillWidth().Background(p.surface).Border(1, p.line).Radius(8).Clip().Children(func() {
+					ui.Box(c).Grow(1).FillWidth().Background(p.surface).Border(1, p.line).Radius(radiusOverlay).Clip().Children(func() {
 						ui.Scroll(c).Grow(1).FillWidth().Children(func() {
 							ui.Row(c).FillWidth().AlignItems(ui.Start).
 								Gap(batchGutterGap).Padding(batchBoxPadV, batchBoxPadH).Children(func() {
@@ -387,14 +387,14 @@ func (a *App) batchStats(c *ui.Context, info batchInfo) {
 }
 
 func (a *App) statChip(c *ui.Context, label string, ic *ui.SVG, fg, bg ui.Color) {
-	ui.Row(c).Padding(3, 5).Radius(4).Background(bg).Gap(3).AlignItems(ui.Center).Children(func() {
+	ui.Row(c).Padding(3, 5).Radius(radiusControl).Background(bg).Gap(3).AlignItems(ui.Center).Children(func() {
 		ui.Icon(c, ic).Size(9, 9).TextColor(fg)
 		ui.Text(c, label).FontSize(9).FontWeight(600).TextColor(fg)
 	})
 }
 
 func (a *App) batchCallout(c *ui.Context, ic *ui.SVG, bg, fg ui.Color, text string) {
-	ui.Row(c).FillWidth().Margin(0, 4, 7, 4).Padding(6, 8).Radius(7).Background(bg).Gap(6).AlignItems(ui.Start).Children(func() {
+	ui.Row(c).FillWidth().Margin(0, 4, 7, 4).Padding(6, 8).Radius(radiusControl).Background(bg).Gap(6).AlignItems(ui.Start).Children(func() {
 		ui.Icon(c, ic).Size(10, 10).TextColor(fg)
 		ui.Text(c, text).FontSize(9.5).TextColor(fg).MaxLines(4)
 	})
@@ -418,7 +418,7 @@ func (a *App) batchEntry(c *ui.Context, index int, text string, added, removed b
 		fg = p.danger
 		mark = "−"
 	}
-	ui.Row(c).FillWidth().Margin(0, 0, 3, 0).Padding(4, 3).Radius(6).Background(bg).Border(1, border).
+	ui.Row(c).FillWidth().Margin(0, 0, 3, 0).Padding(4, 3).Radius(radiusControl).Background(bg).Border(1, border).
 		AlignItems(ui.Center).Gap(3).Children(func() {
 		ui.Textf(c, "%02d", index).Font(monoFont).FontSize(8.5).TextColor(p.text3).Width(16).TextAlign(ui.End)
 		if mark != "" {

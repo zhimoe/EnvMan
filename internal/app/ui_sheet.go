@@ -281,12 +281,12 @@ func (a *App) sheetInfoRow(c *ui.Context, label, value string) {
 
 func (a *App) sheetValueList(c *ui.Context, s *sheetState) {
 	p := a.pal
-	ui.Column(c).FillWidth().Radius(9).Background(p.surface2).Border(1, p.line).Padding(2).Children(func() {
+	ui.Column(c).FillWidth().Radius(radiusOverlay).Background(p.surface2).Border(1, p.line).Padding(2).Children(func() {
 		for i := 0; i < len(s.entries); i++ {
 			i := i
-			row := ui.Row(c).Height(32).FillWidth().Radius(5).Padding(0, 1).Gap(2).AlignItems(ui.Center)
+			row := ui.Row(c).Height(32).FillWidth().Radius(radiusControl).Padding(0, 1).Gap(2).AlignItems(ui.Center)
 			row.Children(func() {
-				ui.Textf(c, "%02d", i+1).Font(monoFont).FontSize(9).TextColor(p.text3).Width(20).TextAlign(ui.End)
+				ui.Textf(c, "%02d", i+1).Font(monoFont).FontSize(9).TextColor(p.text3).Width(15).TextAlign(ui.End)
 				ui.TextInput(c, &s.entries[i]).Height(27).Font(monoFont).FontSize(11.5).
 					Label(fmt.Sprintf("条目 %d", i+1)).Grow(1)
 				up := a.iconButtonBase(c, iconChevronDown, "上移", 18)
@@ -317,7 +317,7 @@ func (a *App) sheetValueList(c *ui.Context, s *sheetState) {
 			}
 		}
 		ui.Box(c).Height(4)
-		add := ui.ButtonBase(c).Height(29).FillWidth().Radius(6).Center().Gap(5).Cursor(ui.CursorPointer)
+		add := ui.ButtonBase(c).Height(29).FillWidth().Radius(radiusControl).Center().Gap(5).Cursor(ui.CursorPointer)
 		add.Label("添加条目")
 		add.Children(func() {
 			ui.Icon(c, iconPlus).Size(12, 12).TextColor(p.text3)
@@ -351,7 +351,7 @@ func (a *App) sheetWarnings(c *ui.Context, entries []string) {
 }
 
 func (a *App) sheetCallout(c *ui.Context, ic *ui.SVG, bg, border, fg ui.Color, text string) {
-	ui.Row(c).FillWidth().Padding(7, 9).Radius(7).Background(bg).Border(1, border).Gap(6).AlignItems(ui.Start).Children(func() {
+	ui.Row(c).FillWidth().Padding(7, 9).Radius(radiusControl).Background(bg).Border(1, border).Gap(6).AlignItems(ui.Start).Children(func() {
 		ui.Icon(c, ic).Size(11, 11).TextColor(fg)
 		ui.Text(c, text).FontSize(10).TextColor(fg).MaxLines(4)
 	})
@@ -363,7 +363,7 @@ func (a *App) resolvePreview(c *ui.Context, value string) {
 	if expanded == value {
 		return
 	}
-	ui.Row(c).FillWidth().Padding(7, 9).Radius(7).Background(p.surface2).Border(1, p.line).Children(func() {
+	ui.Row(c).FillWidth().Padding(7, 9).Radius(radiusControl).Background(p.surface2).Border(1, p.line).Children(func() {
 		ui.Column(c).Grow(1).Gap(2).Children(func() {
 			ui.Text(c, "解析预览").FontSize(8.5).FontWeight(600).LetterSpacing(0.4).TextColor(p.text3)
 			ui.Text(c, expanded).Font(monoFont).FontSize(10.5).TextColor(p.text2)

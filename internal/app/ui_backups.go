@@ -16,12 +16,12 @@ func (a *App) backupsView(c *ui.Context) {
 		back := ui.Row(c).Absolute().Left(0).Top(42).Right(0).Bottom(0).Center().
 			Background(ui.RGBA(0, 0, 0, 0.38)).Modal()
 		back.Children(func() {
-			panel := ui.Column(c).Width(500).Padding(18).Radius(12).Background(p.surface).
+			panel := ui.Column(c).Width(500).Padding(18).Radius(radiusOverlay).Background(p.surface).
 				Border(1, p.line).Shadow(0, 18, 50, 0, ui.RGBA(0, 0, 0, 0.35)).
 				Role(ui.RoleDialog).Label("备份历史")
 			panel.Children(func() {
 				ui.Row(c).FillWidth().AlignItems(ui.Center).Gap(8).Children(func() {
-					ui.Row(c).Size(32, 32).Radius(9).Background(p.accentSoft).Center().Children(func() {
+					ui.Row(c).Size(32, 32).Radius(tileRadius(32)).Background(p.accentSoft).Center().Children(func() {
 						ui.Icon(c, iconClock).Size(16, 16).TextColor(p.accent)
 					})
 					ui.Column(c).Grow(1).Gap(1).Children(func() {
@@ -60,9 +60,9 @@ func (a *App) backupsView(c *ui.Context) {
 
 func (a *App) backupRow(c *ui.Context, snap Snapshot) {
 	p := a.pal
-	ui.Row(c).FillWidth().Padding(9, 10).Radius(9).Background(p.surface2).Border(1, p.line).
+	ui.Row(c).FillWidth().Padding(9, 10).Radius(radiusOverlay).Background(p.surface2).Border(1, p.line).
 		AlignItems(ui.Center).Gap(9).Children(func() {
-		ui.Row(c).Size(27, 27).Radius(7).Background(p.surface).Border(1, p.line).Center().Children(func() {
+		ui.Row(c).Size(27, 27).Radius(tileRadius(27)).Background(p.surface).Border(1, p.line).Center().Children(func() {
 			ui.Icon(c, iconClock).Size(13, 13).TextColor(p.text3)
 		})
 		ui.Column(c).Grow(1).Gap(2).Children(func() {

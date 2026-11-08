@@ -8,7 +8,7 @@ import (
 )
 
 func (a *App) iconButtonBase(c *ui.Context, s *ui.SVG, tip string, size float32) ui.Element {
-	b := ui.ButtonBase(c).Size(size, size).Radius(5).Center().Cursor(ui.CursorPointer)
+	b := ui.ButtonBase(c).Size(size, size).Radius(radiusControl).Center().Cursor(ui.CursorPointer)
 	if tip != "" {
 		b.Label(tip).Tooltip(tip)
 	}
@@ -29,7 +29,7 @@ func (a *App) iconButton(c *ui.Context, s *ui.SVG, tip string, size float32, onC
 }
 
 func (a *App) iconButtonColor(c *ui.Context, s *ui.SVG, tip string, size float32, color ui.Color, onClick func()) {
-	b := ui.ButtonBase(c).Size(size, size).Radius(5).Center().Cursor(ui.CursorPointer)
+	b := ui.ButtonBase(c).Size(size, size).Radius(radiusControl).Center().Cursor(ui.CursorPointer)
 	b.Label(tip).Tooltip(tip)
 	b.Children(func() {
 		ui.Icon(c, s).Size(size*0.54, size*0.54).TextColor(color)
@@ -92,7 +92,7 @@ func (a *App) button(c *ui.Context, label string, s *ui.SVG, kind buttonKind, en
 			border = ui.Transparent
 		}
 	}
-	b := ui.ButtonBase(c).Height(h).Padding(0, px).Radius(8).Gap(6).Cursor(ui.CursorPointer)
+	b := ui.ButtonBase(c).Height(h).Padding(0, px).Radius(radiusControl).Gap(6).Cursor(ui.CursorPointer)
 	b.Background(bg).Border(1, border).TextColor(fg).FontSize(12).FontWeight(600)
 	b.Label(label)
 	if !enabled {
@@ -117,7 +117,7 @@ func (a *App) textButton(c *ui.Context, label string, enabled bool, onClick func
 }
 
 func (a *App) chip(c *ui.Context, text string, fg, bg ui.Color, size float32) ui.Element {
-	return ui.Row(c).Padding(1.5, 5).Radius(99).Background(bg).AlignItems(ui.Center).Children(func() {
+	return ui.Row(c).Padding(1.5, 5).Radius(radiusPill).Background(bg).AlignItems(ui.Center).Children(func() {
 		ui.Text(c, text).FontSize(size).FontWeight(600).TextColor(fg).SingleLine()
 	})
 }
@@ -131,7 +131,7 @@ func (a *App) scopePill(c *ui.Context, scope Scope) {
 	if scope == ScopeSystem {
 		fg, bg = a.pal.warn, a.pal.warnSoft
 	}
-	ui.Row(c).Background(bg).Radius(99).Padding(3, 7).Gap(4).AlignItems(ui.Center).Children(func() {
+	ui.Row(c).Background(bg).Radius(radiusPill).Padding(3, 7).Gap(4).AlignItems(ui.Center).Children(func() {
 		s := iconUser
 		if scope == ScopeSystem {
 			s = iconShield
@@ -237,7 +237,7 @@ func (a *App) divider(c *ui.Context, horizontal bool, color ui.Color) ui.Element
 
 func (a *App) quietButton(c *ui.Context, label string, s *ui.SVG, enabled bool, onClick func()) {
 	p := a.pal
-	b := ui.ButtonBase(c).Height(28).Padding(0, 8).Radius(7).Gap(6).Cursor(ui.CursorPointer)
+	b := ui.ButtonBase(c).Height(28).Padding(0, 8).Radius(radiusControl).Gap(6).Cursor(ui.CursorPointer)
 	b.Label(label).FontSize(10.5).TextColor(p.text2)
 	if s != nil {
 		b.Children(func() {
@@ -271,7 +271,7 @@ func cmdKeyLabel() string {
 
 func (a *App) checkBox(c *ui.Context, checked, mixed bool, label string, onToggle func()) {
 	p := a.pal
-	box := ui.ButtonBase(c).Size(15, 15).Radius(4).Cursor(ui.CursorPointer).
+	box := ui.ButtonBase(c).Size(15, 15).Radius(radiusControl).Cursor(ui.CursorPointer).
 		Border(1.4, p.line).Background(p.surface).Role(ui.RoleCheckBox).Label(label).FocusRing(false)
 	box.Checked(checked)
 	if mixed {

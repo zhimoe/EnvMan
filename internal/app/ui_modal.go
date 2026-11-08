@@ -43,11 +43,11 @@ func (a *App) modalView(c *ui.Context) {
 		back := ui.Row(c).Absolute().Left(0).Top(42).Right(0).Bottom(0).Center().
 			Background(ui.RGBA(0, 0, 0, 0.44)).Modal()
 		back.Children(func() {
-			panel := ui.Column(c).Width(400).Padding(18).Radius(12).Background(p.surface).
+			panel := ui.Column(c).Width(400).Padding(18).Radius(radiusOverlay).Background(p.surface).
 				Border(1, p.line).Shadow(0, 18, 50, 0, ui.RGBA(0, 0, 0, 0.35)).
 				Role(ui.RoleDialog).Label(m.title)
 			panel.Children(func() {
-				ui.Row(c).Size(34, 34).Radius(10).Background(iconBg).Center().Children(func() {
+				ui.Row(c).Size(34, 34).Radius(tileRadius(34)).Background(iconBg).Center().Children(func() {
 					ui.Icon(c, icon).Size(17, 17).TextColor(iconFg)
 				})
 				ui.Box(c).Height(10)

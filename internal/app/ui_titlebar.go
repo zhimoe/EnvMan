@@ -24,7 +24,7 @@ func (a *App) titlebar(c *ui.Context) {
 		AlignItems(ui.Center).DragWindow()
 	row.Children(func() {
 		ui.Row(c).Gap(9).AlignItems(ui.Center).Children(func() {
-			ui.Row(c).Size(21, 21).Radius(6).Background(p.accent).Center().Children(func() {
+			ui.Row(c).Size(21, 21).Radius(tileRadius(21)).Background(p.accent).Center().Children(func() {
 				ui.Icon(c, iconSliders).Size(15, 15).TextColor(p.accentText)
 			})
 			ui.Text(c, "EnvMan").FontSize(12.5).FontWeight(650).TextColor(p.text)

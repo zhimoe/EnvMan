@@ -51,9 +51,9 @@ func (a *App) mainHeader(c *ui.Context) {
 				if a.scope == ScopeSystem {
 					dot = p.warn
 				}
-				ui.Box(c).Size(7, 7).Radius(99).Background(dot)
+				ui.Box(c).Size(7, 7).Radius(radiusPill).Background(dot)
 				ui.Text(c, a.scope.String()).FontSize(18).FontWeight(650).TextColor(p.text)
-				ui.Row(c).Padding(1.5, 5).Radius(5).Background(p.surface3).Children(func() {
+				ui.Row(c).Padding(1.5, 5).Radius(radiusPill).Background(p.surface3).Children(func() {
 					ui.Text(c, fmt.Sprint(a.scopeCount(a.scope))).FontSize(9.5).FontWeight(600).TextColor(p.text3)
 				})
 			})
@@ -140,7 +140,7 @@ func (a *App) toolbar(c *ui.Context) {
 
 func (a *App) errorBanner(c *ui.Context, message string) {
 	p := a.pal
-	ui.Row(c).Margin(0, 22, 8, 22).Height(32).Padding(0, 8).Radius(9).
+	ui.Row(c).Margin(0, 22, 8, 22).Height(32).Padding(0, 8).Radius(radiusOverlay).
 		Background(p.dangerSoft).Border(1, p.dangerSoft).AlignItems(ui.Center).Gap(7).Children(func() {
 		ui.Icon(c, iconAlert).Size(14, 14).TextColor(p.danger)
 		ui.Text(c, message).FontSize(10.5).TextColor(p.danger).Grow(1).SingleLine()
@@ -150,7 +150,7 @@ func (a *App) errorBanner(c *ui.Context, message string) {
 
 func (a *App) readonlyBanner(c *ui.Context) {
 	p := a.pal
-	ui.Row(c).Margin(0, 22, 8, 22).Height(32).Padding(0, 8).Radius(9).
+	ui.Row(c).Margin(0, 22, 8, 22).Height(32).Padding(0, 8).Radius(radiusOverlay).
 		Background(p.warnSoft).Border(1, p.warnSoft).AlignItems(ui.Center).Gap(7).Children(func() {
 		ui.Icon(c, iconShield).Size(14, 14).TextColor(p.warn)
 		ui.Text(c, "系统变量为只读。以管理员身份重新启动后可修改。").FontSize(10.5).TextColor(p.warn).Grow(1).SingleLine()
@@ -163,9 +163,9 @@ func (a *App) readonlyBanner(c *ui.Context) {
 func (a *App) selectionBar(c *ui.Context) {
 	p := a.pal
 	n := a.checkedCount()
-	ui.Row(c).Margin(0, 22, 8, 22).Height(38).Padding(0, 6, 0, 12).Radius(9).
+	ui.Row(c).Margin(0, 22, 8, 22).Height(38).Padding(0, 6, 0, 12).Radius(radiusOverlay).
 		Background(p.accentSoft).Border(1, p.accentSoft2).AlignItems(ui.Center).Gap(8).Children(func() {
-		ui.Row(c).Size(15, 15).Radius(99).Center().Background(p.accent).Children(func() {
+		ui.Row(c).Size(15, 15).Radius(radiusPill).Center().Background(p.accent).Children(func() {
 			ui.Icon(c, iconCheck).Size(10, 10).TextColor(p.accentText)
 		})
 		ui.Textf(c, "已选择 %d 项", n).FontSize(11).TextColor(p.text2)
@@ -180,7 +180,7 @@ func (a *App) selectionBar(c *ui.Context) {
 
 func (a *App) dangerTextButton(c *ui.Context, label string, onClick func()) {
 	p := a.pal
-	b := ui.ButtonBase(c).Height(22).Padding(0, 5).Radius(5).Cursor(ui.CursorPointer).Gap(4)
+	b := ui.ButtonBase(c).Height(22).Padding(0, 5).Radius(radiusControl).Cursor(ui.CursorPointer).Gap(4)
 	b.Label(label).Children(func() {
 		ui.Icon(c, iconTrash).Size(12, 12).TextColor(p.danger)
 		ui.Text(c, label).FontSize(10.5).FontWeight(600).TextColor(p.danger)
@@ -251,7 +251,7 @@ func (a *App) postToast(msg string) {
 
 func (a *App) table(c *ui.Context, rows []Variable) {
 	p := a.pal
-	ui.Column(c).Grow(1).Margin(0, 22, 12, 22).Radius(10).Background(p.surface).
+	ui.Column(c).Grow(1).Margin(0, 22, 12, 22).Radius(radiusOverlay).Background(p.surface).
 		Border(1, p.line).Clip().Children(func() {
 		a.tableHeader(c, rows)
 		if len(rows) == 0 {
@@ -285,7 +285,7 @@ func (a *App) tableHeader(c *ui.Context, rows []Variable) {
 			})
 		})
 		ui.Row(c).Width(colName).Padding(0, 12, 0, 0).Children(func() {
-			sort := ui.ButtonBase(c).Height(22).Padding(0, 3).Radius(4).Gap(4).Cursor(ui.CursorPointer)
+			sort := ui.ButtonBase(c).Height(22).Padding(0, 3).Radius(radiusControl).Gap(4).Cursor(ui.CursorPointer)
 			sort.Label("按变量名排序")
 			sort.Children(func() {
 				ui.Text(c, "变量名").FontSize(9.5).FontWeight(600).LetterSpacing(0.5).TextColor(p.text3)
@@ -358,7 +358,7 @@ func (a *App) tableFooter(c *ui.Context, rows []Variable) {
 	p := a.pal
 	ui.Row(c).Height(30).FillWidth().Background(p.surface2).
 		BorderWidth(1, 0, 0, 0).BorderColor(p.line).Padding(0, 10).AlignItems(ui.Center).Gap(6).Children(func() {
-		ui.Box(c).Size(5, 5).Radius(99).Background(p.success)
+		ui.Box(c).Size(5, 5).Radius(radiusPill).Background(p.success)
 		total := a.scopeCount(a.scope)
 		text := fmt.Sprintf("%d 个变量 · 保存前自动备份", total)
 		if len(rows) != total {
@@ -378,7 +378,7 @@ func (a *App) tableFooter(c *ui.Context, rows []Variable) {
 func (a *App) emptyState(c *ui.Context) {
 	p := a.pal
 	ui.Column(c).Grow(1).FillWidth().Center().Gap(9).Padding(36).Children(func() {
-		ui.Column(c).Size(48, 48).Radius(14).Background(p.surface2).Border(1, p.line).Center().Children(func() {
+		ui.Column(c).Size(48, 48).Radius(tileRadius(48)).Background(p.surface2).Border(1, p.line).Center().Children(func() {
 			icon := iconLayers
 			if strings.TrimSpace(a.query) != "" {
 				icon = iconSearch
@@ -461,12 +461,14 @@ func (a *App) variableRow(c *ui.Context, v Variable, index int) {
 					actionEls = append(actionEls, edit)
 					// The List reuses Accent/AccentText to hide its own selection
 					// highlight; restore the real accent colors so popover menu
-					// items stay readable when highlighted.
+					// items stay readable when highlighted. MyGo draws a menu
+					// panel at Radius+2, so keep the overlay radius there.
 					menuTheme := *c.Theme()
 					menuTheme.Accent = p.accent
 					menuTheme.AccentHover = p.accentHover
 					menuTheme.AccentPressed = p.accentPress
 					menuTheme.AccentText = p.accentText
+					menuTheme.Radius = radiusOverlay - 2
 					ui.Themed(c, &menuTheme).Background(ui.Transparent).Children(func() {
 						more := a.iconButtonBase(c, iconMore, "更多操作", 25)
 						if more.Hovered() {
@@ -554,7 +556,7 @@ func (a *App) valueCell(c *ui.Context, v Variable, index int) {
 	toggle := ui.ButtonBase(c).Grow(1).Padding(0).Gap(6).Cursor(ui.CursorPointer)
 	toggle.Label(v.Name + " 条目")
 	toggle.Children(func() {
-		ui.Row(c).Size(17, 17).Radius(5).Center().
+		ui.Row(c).Size(17, 17).Radius(tileRadius(17)).Center().
 			Background(chooseColor(expanded, p.accentSoft, p.surface3)).Children(func() {
 			col := p.text3
 			if expanded {
@@ -570,7 +572,7 @@ func (a *App) valueCell(c *ui.Context, v Variable, index int) {
 		} else {
 			a.richValue(c, strings.Join(entries, ";"), a.query, 12, p.text2, 1).Grow(1).MinWidth(0)
 		}
-		ui.Row(c).Padding(1.5, 5).Radius(99).Background(p.surface2).Border(1, p.line).Children(func() {
+		ui.Row(c).Padding(1.5, 5).Radius(radiusPill).Background(p.surface2).Border(1, p.line).Children(func() {
 			ui.Textf(c, "%d 项", len(entries)).FontSize(9).FontWeight(600).TextColor(p.text3)
 		})
 	})
@@ -589,7 +591,7 @@ func chooseColor(cond bool, yes, no ui.Color) ui.Color {
 func (a *App) entriesPanel(c *ui.Context, v Variable) {
 	p := a.pal
 	entries := splitValue(v.Value)
-	ui.Column(c).FillWidth().Radius(7).Background(p.surface2).Border(1, p.line).Padding(4).Children(func() {
+	ui.Column(c).FillWidth().Radius(radiusControl).Background(p.surface2).Border(1, p.line).Padding(4).Children(func() {
 		ui.Row(c).Padding(0, 6, 3, 6).AlignItems(ui.Center).Children(func() {
 			ui.Textf(c, "%d 个条目 · 以 ; 分隔", len(entries)).FontSize(9).TextColor(p.text3).Grow(1)
 			a.textButton(c, "整段编辑", true, func() {

@@ -18,7 +18,7 @@ func (a *App) sideItem(c *ui.Context, s *ui.SVG, label string, count int, active
 		fg = p.text
 		iconColor = accent
 	}
-	b := ui.ButtonBase(c).Height(31).FillWidth().Padding(0, 8).Radius(7).Gap(8).
+	b := ui.ButtonBase(c).Height(31).FillWidth().Padding(0, 8).Radius(radiusControl).Gap(8).
 		Background(bg).Border(1, border).Cursor(ui.CursorPointer)
 	b.Children(func() {
 		if s != nil {
@@ -33,7 +33,7 @@ func (a *App) sideItem(c *ui.Context, s *ui.SVG, label string, count int, active
 			if active {
 				fg2, bg2 = accent, p.accentSoft
 			}
-			ui.Row(c).Padding(1.5, 5).Radius(99).Background(bg2).Children(func() {
+			ui.Row(c).Padding(1.5, 5).Radius(radiusPill).Background(bg2).Children(func() {
 				ui.Text(c, fmt.Sprint(count)).FontSize(9.5).FontWeight(600).TextColor(fg2)
 			})
 		}
@@ -101,10 +101,10 @@ func (a *App) adminCard(c *ui.Context) {
 		title = "管理员权限"
 		sub = "可修改系统变量"
 	}
-	card := ui.Column(c).FillWidth().Radius(10).Background(bg).Border(1, border).Padding(9, 10).Gap(5)
+	card := ui.Column(c).FillWidth().Radius(radiusOverlay).Background(bg).Border(1, border).Padding(9, 10).Gap(5)
 	card.Children(func() {
 		ui.Row(c).Gap(8).AlignItems(ui.Center).Children(func() {
-			ui.Row(c).Size(24, 24).Radius(7).Background(icoBg).Center().Children(func() {
+			ui.Row(c).Size(24, 24).Radius(tileRadius(24)).Background(icoBg).Center().Children(func() {
 				icon := iconShield
 				if a.admin {
 					icon = iconShieldDone
