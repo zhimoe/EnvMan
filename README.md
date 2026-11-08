@@ -21,7 +21,7 @@ HTML、CSS 或 JavaScript。
 ## 开发
 
 需要 Go 1.27.3 或更高版本。MyGo CLI 已通过 `go.mod` 的 `tool` 指令固定为
-v0.7.4；所有 Go 依赖都提交在 `vendor/` 中。
+v0.8.3；所有 Go 依赖都提交在 `vendor/` 中。
 
 ```sh
 # 在当前平台运行；非 Windows 平台使用内置演示数据
