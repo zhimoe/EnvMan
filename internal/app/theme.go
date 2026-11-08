@@ -161,6 +161,7 @@ func (a *App) buildTheme(c *ui.Context) (*ui.Theme, palette) {
 	if scale < 1 {
 		scale = 1
 	}
+	a.metrics = newMetrics(scale)
 	base := ui.LightTheme()
 	if dark {
 		base = ui.DarkTheme()
@@ -168,7 +169,7 @@ func (a *App) buildTheme(c *ui.Context) (*ui.Theme, palette) {
 	t := *base
 	t.Dark = dark
 	t.Spacing = 3
-	t.FontSize = 12.5 * scale
+	t.FontSize = a.metrics.fontBody
 	t.Radius = radiusControl
 	t.Font = ""
 	t.Background = p.window

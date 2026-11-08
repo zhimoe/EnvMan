@@ -9,11 +9,11 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
+// The table's columns: the check box, the name, and the actions at its end.
 const (
 	colCheck   float32 = 34
 	colName    float32 = 200
 	colActions float32 = 72
-	rowHeight  float32 = 34
 )
 
 func (a *App) mainView(c *ui.Context) {
@@ -44,20 +44,20 @@ func (a *App) mainPane(c *ui.Context) {
 
 func (a *App) mainHeader(c *ui.Context) {
 	p := a.pal
-	ui.Row(c).Padding(15, 22, 0, 22).FillWidth().AlignItems(ui.Start).Children(func() {
-		ui.Column(c).Grow(1).Gap(4).Children(func() {
-			ui.Row(c).Gap(8).AlignItems(ui.Center).Children(func() {
+	ui.Row(c).Padding(space16, space24, 0, space24).FillWidth().AlignItems(ui.Start).Children(func() {
+		ui.Column(c).Grow(1).Gap(space4).Children(func() {
+			ui.Row(c).Gap(space8).AlignItems(ui.Center).Children(func() {
 				dot := p.accent
 				if a.scope == ScopeSystem {
 					dot = p.warn
 				}
 				ui.Box(c).Size(7, 7).Radius(radiusPill).Background(dot)
-				ui.Text(c, a.scope.String()).FontSize(18).FontWeight(650).TextColor(p.text)
-				ui.Row(c).Padding(1.5, 5).Radius(radiusPill).Background(p.surface3).Children(func() {
-					ui.Text(c, fmt.Sprint(a.scopeCount(a.scope))).FontSize(9.5).FontWeight(600).TextColor(p.text3)
+				ui.Text(c, a.scope.String()).FontSize(a.metrics.fontTitle).FontWeight(weightSemibold).TextColor(p.text)
+				ui.Row(c).Padding(1.5, space4).Radius(radiusPill).Background(p.surface3).Children(func() {
+					ui.Text(c, fmt.Sprint(a.scopeCount(a.scope))).FontSize(a.metrics.fontCaption).FontWeight(weightSemibold).TextColor(p.text3)
 				})
 			})
-			sub := ui.Row(c).Gap(5).AlignItems(ui.Center)
+			sub := ui.Row(c).Gap(space4).AlignItems(ui.Center)
 			sub.Children(func() {
 				if a.scope == ScopeSystem {
 					icon := iconLock
@@ -72,10 +72,10 @@ func (a *App) mainHeader(c *ui.Context) {
 				if a.scope == ScopeSystem && !a.admin {
 					textColor = p.warn
 				}
-				ui.Text(c, a.scopeSubtitle()).FontSize(10.5).TextColor(textColor)
+				ui.Text(c, a.scopeSubtitle()).FontSize(a.metrics.fontSmall).TextColor(textColor)
 			})
 		})
-		ui.Row(c).Gap(7).AlignItems(ui.Center).Children(func() {
+		ui.Row(c).Gap(space6).AlignItems(ui.Center).Children(func() {
 			a.button(c, "新建变量", iconPlus, buttonPrimary, true, func() {
 				a.openCreate("")
 			})
@@ -85,8 +85,8 @@ func (a *App) mainHeader(c *ui.Context) {
 
 func (a *App) toolbar(c *ui.Context) {
 	p := a.pal
-	ui.Row(c).Padding(11, 22, 10, 22).FillWidth().AlignItems(ui.Center).Gap(10).Children(func() {
-		search := ui.SearchField(c, &a.query).Grow(1).MaxWidth(500).Height(34).
+	ui.Row(c).Padding(space12, space24, space8, space24).FillWidth().AlignItems(ui.Center).Gap(space8).Children(func() {
+		search := ui.SearchField(c, &a.query).Grow(1).MaxWidth(500).Height(a.metrics.controlMd).
 			Placeholder("搜索变量名或值…").Label("搜索变量名或值").Bind(&a.search)
 		if search.Changed() {
 			a.clearChecked()
@@ -105,7 +105,7 @@ func (a *App) toolbar(c *ui.Context) {
 		rows := a.filtered(a.scope)
 		ui.Spacer(c).Grow(1)
 		if a.query != "" || a.filter != ViewAll {
-			ui.Textf(c, "%d 个结果", len(rows)).FontSize(10.5).TextColor(p.text3)
+			ui.Textf(c, "%d 个结果", len(rows)).FontSize(a.metrics.fontSmall).TextColor(p.text3)
 		}
 		multi := 0
 		allExpanded := true
@@ -140,20 +140,20 @@ func (a *App) toolbar(c *ui.Context) {
 
 func (a *App) errorBanner(c *ui.Context, message string) {
 	p := a.pal
-	ui.Row(c).Margin(0, 22, 8, 22).Height(32).Padding(0, 8).Radius(radiusOverlay).
-		Background(p.dangerSoft).Border(1, p.dangerSoft).AlignItems(ui.Center).Gap(7).Children(func() {
+	ui.Row(c).Margin(0, space24, space8, space24).Height(a.metrics.barH).Padding(0, space8).Radius(radiusOverlay).
+		Background(p.dangerSoft).Border(1, p.dangerSoft).AlignItems(ui.Center).Gap(space6).Children(func() {
 		ui.Icon(c, iconAlert).Size(14, 14).TextColor(p.danger)
-		ui.Text(c, message).FontSize(10.5).TextColor(p.danger).Grow(1).SingleLine()
+		ui.Text(c, message).FontSize(a.metrics.fontSmall).TextColor(p.danger).Grow(1).SingleLine()
 		a.textButton(c, "重试", true, func() { a.reload() })
 	})
 }
 
 func (a *App) readonlyBanner(c *ui.Context) {
 	p := a.pal
-	ui.Row(c).Margin(0, 22, 8, 22).Height(32).Padding(0, 8).Radius(radiusOverlay).
-		Background(p.warnSoft).Border(1, p.warnSoft).AlignItems(ui.Center).Gap(7).Children(func() {
+	ui.Row(c).Margin(0, space24, space8, space24).Height(a.metrics.barH).Padding(0, space8).Radius(radiusOverlay).
+		Background(p.warnSoft).Border(1, p.warnSoft).AlignItems(ui.Center).Gap(space6).Children(func() {
 		ui.Icon(c, iconShield).Size(14, 14).TextColor(p.warn)
-		ui.Text(c, "系统变量为只读。以管理员身份重新启动后可修改。").FontSize(10.5).TextColor(p.warn).Grow(1).SingleLine()
+		ui.Text(c, "系统变量为只读。以管理员身份重新启动后可修改。").FontSize(a.metrics.fontSmall).TextColor(p.warn).Grow(1).SingleLine()
 		a.textButton(c, "立即提权", true, func() {
 			a.requestAdmin()
 		})
@@ -163,27 +163,27 @@ func (a *App) readonlyBanner(c *ui.Context) {
 func (a *App) selectionBar(c *ui.Context) {
 	p := a.pal
 	n := a.checkedCount()
-	ui.Row(c).Margin(0, 22, 8, 22).Height(38).Padding(0, 6, 0, 12).Radius(radiusOverlay).
-		Background(p.accentSoft).Border(1, p.accentSoft2).AlignItems(ui.Center).Gap(8).Children(func() {
+	ui.Row(c).Margin(0, space24, space8, space24).Height(a.metrics.paneHeaderH).Padding(0, space6, 0, space12).Radius(radiusOverlay).
+		Background(p.accentSoft).Border(1, p.accentSoft2).AlignItems(ui.Center).Gap(space8).Children(func() {
 		ui.Row(c).Size(15, 15).Radius(radiusPill).Center().Background(p.accent).Children(func() {
 			ui.Icon(c, iconCheck).Size(10, 10).TextColor(p.accentText)
 		})
-		ui.Textf(c, "已选择 %d 项", n).FontSize(11).TextColor(p.text2)
+		ui.Textf(c, "已选择 %d 项", n).FontSize(a.metrics.fontSmall).TextColor(p.text2)
 		ui.Spacer(c).Grow(1)
 		a.textButton(c, "复制", true, func() { a.copyChecked(c) })
 		a.textButton(c, "导出 .env", true, func() { a.exportChecked() })
-		a.divider(c, false, p.accentSoft2).Height(16)
+		a.divider(c, false, p.accentSoft2).Height(space16)
 		a.dangerTextButton(c, "删除", func() { a.confirmDeleteChecked() })
-		a.iconButton(c, iconX, "取消选择", 25, func() { a.clearChecked() })
+		a.iconButton(c, iconX, "取消选择", a.metrics.controlXs, func() { a.clearChecked() })
 	})
 }
 
 func (a *App) dangerTextButton(c *ui.Context, label string, onClick func()) {
 	p := a.pal
-	b := ui.ButtonBase(c).Height(22).Padding(0, 5).Radius(radiusControl).Cursor(ui.CursorPointer).Gap(4)
+	b := ui.ButtonBase(c).Height(a.metrics.controlXs).Padding(0, space4).Radius(radiusControl).Cursor(ui.CursorPointer).Gap(space4)
 	b.Label(label).Children(func() {
 		ui.Icon(c, iconTrash).Size(12, 12).TextColor(p.danger)
-		ui.Text(c, label).FontSize(10.5).FontWeight(600).TextColor(p.danger)
+		ui.Text(c, label).FontSize(a.metrics.fontSmall).FontWeight(weightSemibold).TextColor(p.danger)
 	})
 	if b.Hovered() {
 		b.Background(p.dangerSoft)
@@ -251,7 +251,7 @@ func (a *App) postToast(msg string) {
 
 func (a *App) table(c *ui.Context, rows []Variable) {
 	p := a.pal
-	ui.Column(c).Grow(1).Margin(0, 22, 12, 22).Radius(radiusOverlay).Background(p.surface).
+	ui.Column(c).Grow(1).Margin(0, space24, space12, space24).Radius(radiusOverlay).Background(p.surface).
 		Border(1, p.line).Clip().Children(func() {
 		a.tableHeader(c, rows)
 		if len(rows) == 0 {
@@ -265,7 +265,7 @@ func (a *App) table(c *ui.Context, rows []Variable) {
 
 func (a *App) tableHeader(c *ui.Context, rows []Variable) {
 	p := a.pal
-	ui.Row(c).Height(31).FillWidth().Background(p.surface2).
+	ui.Row(c).Height(a.metrics.barH).FillWidth().Background(p.surface2).
 		BorderWidth(0, 0, 1, 0).BorderColor(p.line).AlignItems(ui.Center).Children(func() {
 		all := len(rows) > 0
 		any := false
@@ -276,7 +276,7 @@ func (a *App) tableHeader(c *ui.Context, rows []Variable) {
 				all = false
 			}
 		}
-		ui.Row(c).Width(colCheck).Padding(0, 0, 0, 11).AlignItems(ui.Center).Children(func() {
+		ui.Row(c).Width(colCheck).Padding(0, 0, 0, space12).AlignItems(ui.Center).Children(func() {
 			next := !all
 			a.checkBox(c, all, any && !all, "全选当前结果", func() {
 				for _, v := range rows {
@@ -284,16 +284,16 @@ func (a *App) tableHeader(c *ui.Context, rows []Variable) {
 				}
 			})
 		})
-		ui.Row(c).Width(colName).Padding(0, 12, 0, 0).Children(func() {
-			sort := ui.ButtonBase(c).Height(22).Padding(0, 3).Radius(radiusControl).Gap(4).Cursor(ui.CursorPointer)
+		ui.Row(c).Width(colName).Padding(0, space12, 0, 0).Children(func() {
+			sort := ui.ButtonBase(c).Height(a.metrics.controlXs).Padding(0, space2).Radius(radiusControl).Gap(space4).Cursor(ui.CursorPointer)
 			sort.Label("按变量名排序")
 			sort.Children(func() {
-				ui.Text(c, "变量名").FontSize(9.5).FontWeight(600).LetterSpacing(0.5).TextColor(p.text3)
+				ui.Text(c, "变量名").FontSize(a.metrics.fontCaption).FontWeight(weightSemibold).LetterSpacing(0.5).TextColor(p.text3)
 				arrow := "↑"
 				if a.sortDesc {
 					arrow = "↓"
 				}
-				ui.Text(c, arrow).FontSize(9).TextColor(p.text3)
+				ui.Text(c, arrow).FontSize(a.metrics.fontCaption).TextColor(p.text3)
 			})
 			if sort.Hovered() {
 				sort.Background(p.surface3)
@@ -302,8 +302,8 @@ func (a *App) tableHeader(c *ui.Context, rows []Variable) {
 				a.sortDesc = !a.sortDesc
 			}
 		})
-		ui.Row(c).Grow(1).MinWidth(0).Padding(0, 12, 0, 0).Children(func() {
-			ui.Text(c, "值").FontSize(9.5).FontWeight(600).LetterSpacing(0.5).TextColor(p.text3)
+		ui.Row(c).Grow(1).MinWidth(0).Padding(0, space12, 0, 0).Children(func() {
+			ui.Text(c, "值").FontSize(a.metrics.fontCaption).FontWeight(weightSemibold).LetterSpacing(0.5).TextColor(p.text3)
 		})
 		ui.Box(c).Width(colActions)
 	})
@@ -356,28 +356,28 @@ func (a *App) tableList(c *ui.Context, rows []Variable) {
 
 func (a *App) tableFooter(c *ui.Context, rows []Variable) {
 	p := a.pal
-	ui.Row(c).Height(30).FillWidth().Background(p.surface2).
-		BorderWidth(1, 0, 0, 0).BorderColor(p.line).Padding(0, 10).AlignItems(ui.Center).Gap(6).Children(func() {
+	ui.Row(c).Height(a.metrics.barH).FillWidth().Background(p.surface2).
+		BorderWidth(1, 0, 0, 0).BorderColor(p.line).Padding(0, space8).AlignItems(ui.Center).Gap(space6).Children(func() {
 		ui.Box(c).Size(5, 5).Radius(radiusPill).Background(p.success)
 		total := a.scopeCount(a.scope)
 		text := fmt.Sprintf("%d 个变量 · 保存前自动备份", total)
 		if len(rows) != total {
 			text = fmt.Sprintf("显示 %d / %d 个变量 · 保存前自动备份", len(rows), total)
 		}
-		ui.Text(c, text).FontSize(9.5).TextColor(p.text3).SingleLine()
+		ui.Text(c, text).FontSize(a.metrics.fontCaption).TextColor(p.text3).SingleLine()
 		ui.Spacer(c).Grow(1)
 		w, _ := c.Size()
 		if w > 1040 {
-			ui.Textf(c, "双击编辑  空格展开  %s 搜索", cmdKeyLabel()).FontSize(9.5).TextColor(p.text3)
+			ui.Textf(c, "双击编辑  空格展开  %s 搜索", cmdKeyLabel()).FontSize(a.metrics.fontCaption).TextColor(p.text3)
 		} else {
-			ui.Text(c, "双击编辑 · 空格展开").FontSize(9.5).TextColor(p.text3)
+			ui.Text(c, "双击编辑 · 空格展开").FontSize(a.metrics.fontCaption).TextColor(p.text3)
 		}
 	})
 }
 
 func (a *App) emptyState(c *ui.Context) {
 	p := a.pal
-	ui.Column(c).Grow(1).FillWidth().Center().Gap(9).Padding(36).Children(func() {
+	ui.Column(c).Grow(1).FillWidth().Center().Gap(space8).Padding(space32).Children(func() {
 		ui.Column(c).Size(48, 48).Radius(tileRadius(48)).Background(p.surface2).Border(1, p.line).Center().Children(func() {
 			icon := iconLayers
 			if strings.TrimSpace(a.query) != "" {
@@ -400,9 +400,9 @@ func (a *App) emptyState(c *ui.Context) {
 			title = "没有含变量引用的值"
 			desc = "像 %SystemRoot% 这样的引用会显示在这里。"
 		}
-		ui.Text(c, title).FontSize(13.5).FontWeight(600).TextColor(p.text)
-		ui.Text(c, desc).FontSize(11).TextColor(p.text3).MaxLines(2).TextAlign(ui.Center)
-		ui.Row(c).Gap(8).Children(func() {
+		ui.Text(c, title).FontSize(a.metrics.fontSubtitle).FontWeight(weightSemibold).TextColor(p.text)
+		ui.Text(c, desc).FontSize(a.metrics.fontSmall).TextColor(p.text3).MaxLines(2).TextAlign(ui.Center)
+		ui.Row(c).Gap(space8).Children(func() {
 			if strings.TrimSpace(a.query) != "" {
 				a.button(c, "清除搜索", nil, buttonSecondary, true, func() {
 					a.query = ""
@@ -424,16 +424,16 @@ func (a *App) variableRow(c *ui.Context, v Variable, index int) {
 		var actionEls []ui.Element
 		body := ui.Column(c)
 		body.Children(func() {
-			ui.Row(c).Height(rowHeight).FillWidth().Children(func() {
+			ui.Row(c).Height(a.metrics.rowH).FillWidth().Children(func() {
 				// checkbox
-				ui.Row(c).Width(colCheck).Padding(0, 0, 0, 11).AlignItems(ui.Center).Children(func() {
+				ui.Row(c).Width(colCheck).Padding(0, 0, 0, space12).AlignItems(ui.Center).Children(func() {
 					checked := a.isChecked(v)
 					a.checkBox(c, checked, false, "选择 "+v.Name, func() {
 						a.setChecked(v, !checked)
 					})
 				})
 				// name
-				ui.Row(c).Width(colName).Padding(0, 12, 0, 0).AlignItems(ui.Center).Gap(5).Children(func() {
+				ui.Row(c).Width(colName).Padding(0, space12, 0, 0).AlignItems(ui.Center).Gap(space4).Children(func() {
 					a.richName(c, v.Name, a.query).Grow(1).MinWidth(0)
 					if rel := a.overlap(a.scope, v.Name); rel != 0 {
 						text := "覆盖系统"
@@ -442,16 +442,16 @@ func (a *App) variableRow(c *ui.Context, v Variable, index int) {
 							text = "被覆盖"
 							fg, bg = p.text3, p.surface3
 						}
-						a.chip(c, text, fg, bg, 8.5)
+						a.chip(c, text, fg, bg)
 					}
 				})
 				// value
-				ui.Row(c).Grow(1).MinWidth(0).Padding(0, 12, 0, 0).AlignItems(ui.Center).Children(func() {
+				ui.Row(c).Grow(1).MinWidth(0).Padding(0, space12, 0, 0).AlignItems(ui.Center).Children(func() {
 					a.valueCell(c, v, index)
 				})
 				// actions
-				ui.Row(c).Width(colActions).Padding(0, 7, 0, 0).Justify(ui.End).AlignItems(ui.Center).Gap(1).Children(func() {
-					edit := a.iconButtonBase(c, iconPencil, "编辑", 25)
+				ui.Row(c).Width(colActions).Padding(0, space6, 0, 0).Justify(ui.End).AlignItems(ui.Center).Gap(space2).Children(func() {
+					edit := a.iconButtonBase(c, iconPencil, "编辑", a.metrics.controlXs)
 					if edit.Hovered() {
 						edit.Background(p.surface3)
 					}
@@ -470,7 +470,7 @@ func (a *App) variableRow(c *ui.Context, v Variable, index int) {
 					menuTheme.AccentText = p.accentText
 					menuTheme.Radius = radiusOverlay - 2
 					ui.Themed(c, &menuTheme).Background(ui.Transparent).Children(func() {
-						more := a.iconButtonBase(c, iconMore, "更多操作", 25)
+						more := a.iconButtonBase(c, iconMore, "更多操作", a.metrics.controlXs)
 						if more.Hovered() {
 							more.Background(p.surface3)
 						}
@@ -511,11 +511,11 @@ func (a *App) variableRow(c *ui.Context, v Variable, index int) {
 			if isMultiValue(v.Value) && a.isExpanded(a.scope, v.Name) {
 				w, _ := c.Size()
 				if w < 1050 {
-					ui.Row(c).Padding(0, 12, 6, colCheck).Children(func() {
+					ui.Row(c).Padding(0, space12, space6, colCheck).Children(func() {
 						a.entriesPanel(c, v)
 					})
 				} else {
-					ui.Row(c).Padding(0, 84, 6, colCheck+colName).Children(func() {
+					ui.Row(c).Padding(0, 84, space6, colCheck+colName).Children(func() {
 						a.entriesPanel(c, v)
 					})
 				}
@@ -544,7 +544,7 @@ func (a *App) valueCell(c *ui.Context, v Variable, index int) {
 	p := a.pal
 	value := v.Value
 	if value == "" {
-		ui.Text(c, "（空值）").FontSize(11).TextColor(p.text3)
+		ui.Text(c, "（空值）").FontSize(a.metrics.fontSmall).TextColor(p.text3)
 		return
 	}
 	if !isMultiValue(value) {
@@ -553,7 +553,7 @@ func (a *App) valueCell(c *ui.Context, v Variable, index int) {
 	}
 	entries := splitValue(value)
 	expanded := a.isExpanded(a.scope, v.Name)
-	toggle := ui.ButtonBase(c).Grow(1).Padding(0).Gap(6).Cursor(ui.CursorPointer)
+	toggle := ui.ButtonBase(c).Grow(1).Padding(0).Gap(space6).Cursor(ui.CursorPointer)
 	toggle.Label(v.Name + " 条目")
 	toggle.Children(func() {
 		ui.Row(c).Size(17, 17).Radius(tileRadius(17)).Center().
@@ -568,12 +568,12 @@ func (a *App) valueCell(c *ui.Context, v Variable, index int) {
 			}
 		})
 		if expanded {
-			ui.Text(c, "收起条目列表").FontSize(12).TextColor(p.text3).SingleLine().Grow(1)
+			ui.Text(c, "收起条目列表").FontSize(a.metrics.fontBody).TextColor(p.text3).SingleLine().Grow(1)
 		} else {
 			a.richValue(c, strings.Join(entries, ";"), a.query, 12, p.text2, 1).Grow(1).MinWidth(0)
 		}
-		ui.Row(c).Padding(1.5, 5).Radius(radiusPill).Background(p.surface2).Border(1, p.line).Children(func() {
-			ui.Textf(c, "%d 项", len(entries)).FontSize(9).FontWeight(600).TextColor(p.text3)
+		ui.Row(c).Padding(1.5, space4).Radius(radiusPill).Background(p.surface2).Border(1, p.line).Children(func() {
+			ui.Textf(c, "%d 项", len(entries)).FontSize(a.metrics.fontCaption).FontWeight(weightSemibold).TextColor(p.text3)
 		})
 	})
 	if toggle.Clicked() {
@@ -591,16 +591,16 @@ func chooseColor(cond bool, yes, no ui.Color) ui.Color {
 func (a *App) entriesPanel(c *ui.Context, v Variable) {
 	p := a.pal
 	entries := splitValue(v.Value)
-	ui.Column(c).FillWidth().Radius(radiusControl).Background(p.surface2).Border(1, p.line).Padding(4).Children(func() {
-		ui.Row(c).Padding(0, 6, 3, 6).AlignItems(ui.Center).Children(func() {
-			ui.Textf(c, "%d 个条目 · 以 ; 分隔", len(entries)).FontSize(9).TextColor(p.text3).Grow(1)
+	ui.Column(c).FillWidth().Radius(radiusControl).Background(p.surface2).Border(1, p.line).Padding(space4).Children(func() {
+		ui.Row(c).Padding(0, space6, space2, space6).AlignItems(ui.Center).Children(func() {
+			ui.Textf(c, "%d 个条目 · 以 ; 分隔", len(entries)).FontSize(a.metrics.fontCaption).TextColor(p.text3).Grow(1)
 			a.textButton(c, "整段编辑", true, func() {
 				a.openBatch(v.Name)
 			})
 		})
 		for i, entry := range entries {
-			ui.Row(c).Padding(1, 4).AlignItems(ui.Start).Gap(3).Children(func() {
-				ui.Textf(c, "%02d", i+1).Font(monoFont).FontSize(9).TextColor(p.text3).Width(24).TextAlign(ui.End)
+			ui.Row(c).Padding(1, space4).AlignItems(ui.Start).Gap(space2).Children(func() {
+				ui.Textf(c, "%02d", i+1).Font(monoFont).FontSize(a.metrics.fontCaption).TextColor(p.text3).Width(24).TextAlign(ui.End)
 				a.richValue(c, entry, a.query, 11.5, p.text2, 0).Grow(1).MinWidth(0)
 				a.iconButtonColor(c, iconCopy, "复制此条目", 18, p.text3, func() {
 					c.WriteClipboard(entry)

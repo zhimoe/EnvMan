@@ -7,7 +7,7 @@ import (
 func (a *App) titlebar(c *ui.Context) {
 	p := a.pal
 	bar := c.TitleBar()
-	h := float32(42)
+	h := a.metrics.titleBarH
 	if bar.Height > h {
 		h = bar.Height
 	}
@@ -23,11 +23,11 @@ func (a *App) titlebar(c *ui.Context) {
 		Background(p.sidebar).BorderWidth(0, 0, 1, 0).BorderColor(p.line).
 		AlignItems(ui.Center).DragWindow()
 	row.Children(func() {
-		ui.Row(c).Gap(9).AlignItems(ui.Center).Children(func() {
+		ui.Row(c).Gap(space8).AlignItems(ui.Center).Children(func() {
 			ui.Row(c).Size(21, 21).Radius(tileRadius(21)).Background(p.accent).Center().Children(func() {
 				ui.Icon(c, iconSliders).Size(15, 15).TextColor(p.accentText)
 			})
-			ui.Text(c, "EnvMan").FontSize(12.5).FontWeight(650).TextColor(p.text)
+			ui.Text(c, "EnvMan").FontSize(a.metrics.fontBody).FontWeight(weightSemibold).TextColor(p.text)
 		})
 		ui.Spacer(c).Grow(1)
 		themeIcon := iconMoon
@@ -36,7 +36,7 @@ func (a *App) titlebar(c *ui.Context) {
 			themeIcon = iconSun
 			tip = "切换到浅色外观"
 		}
-		a.iconButtonColor(c, themeIcon, tip, 28, p.text3, func() {
+		a.iconButtonColor(c, themeIcon, tip, a.metrics.controlSm, p.text3, func() {
 			a.toggleTheme()
 		})
 	})

@@ -8,26 +8,21 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
-// Measurements of the batch editor's text pane. They are shared by the
-// layout and by the width computation below, so the text pane fills the
-// viewport exactly when its longest line fits.
+// The measurements of the batch editor's text pane, besides the metrics the
+// theme gives: they are shared by the layout and by the width and height
+// computation below, so that the pane fills the viewport exactly when its
+// longest line fits.
 const (
-	batchEditorFont     float32 = 12
-	batchEditorLine     float32 = 18
-	batchGutterWidth    float32 = 22
-	batchGutterGap      float32 = 6
-	batchBoxPadV        float32 = 6
-	batchBoxPadH        float32 = 2
-	batchBoxBorder      float32 = 1
-	batchBodyPadV       float32 = 12
-	batchBodyPadH       float32 = 13
-	batchDividerWidth   float32 = 1
-	batchLeftFlex       float32 = 1.12
-	batchRightFlex      float32 = 0.88
-	batchTitleBarHeight float32 = 42
-	batchHeadHeight     float32 = 52
-	batchPaneHeadHeight float32 = 38
-	batchPaneFootHeight float32 = 33
+	batchGutterWidth  float32 = 22
+	batchGutterGap    float32 = space6
+	batchBoxPadV      float32 = space6
+	batchBoxPadH      float32 = space2
+	batchBoxBorder    float32 = 1
+	batchBodyPadV     float32 = space12
+	batchBodyPadH     float32 = space12
+	batchDividerWidth float32 = 1
+	batchLeftFlex     float32 = 1.12
+	batchRightFlex    float32 = 0.88
 )
 
 type batchInfo struct {
@@ -228,13 +223,13 @@ func (a *App) batchView(c *ui.Context) {
 
 	ui.Column(c).Grow(1).FillWidth().FillHeight().Background(p.window).Children(func() {
 		// Header
-		ui.Row(c).Height(52).FillWidth().Padding(0, 14, 0, 11).Background(p.sidebar).
-			BorderWidth(0, 0, 1, 0).BorderColor(p.line).AlignItems(ui.Center).Gap(8).Children(func() {
-			a.iconButton(c, iconArrowLeft, "返回变量列表（Esc）", 25, func() { a.closeBatch() })
-			ui.Text(c, "批量编辑值").FontSize(13.5).FontWeight(650).TextColor(p.text)
+		ui.Row(c).Height(a.metrics.pageHeaderH).FillWidth().Padding(0, space12).Background(p.sidebar).
+			BorderWidth(0, 0, 1, 0).BorderColor(p.line).AlignItems(ui.Center).Gap(space8).Children(func() {
+			a.iconButton(c, iconArrowLeft, "返回变量列表（Esc）", a.metrics.controlXs, func() { a.closeBatch() })
+			ui.Text(c, "批量编辑值").FontSize(a.metrics.fontSubtitle).FontWeight(weightSemibold).TextColor(p.text)
 			a.scopePill(c, b.scope)
 			ui.Box(c).Width(4)
-			ui.Text(c, "变量").FontSize(9).TextColor(p.text3)
+			ui.Text(c, "变量").FontSize(a.metrics.fontCaption).TextColor(p.text3)
 			oldTarget := b.target
 			sel := ui.Select(c, &b.target, names).Width(170).Label("目标变量")
 			if sel.Changed() && b.target != oldTarget {
@@ -258,9 +253,9 @@ func (a *App) batchView(c *ui.Context) {
 			}
 			w, _ := c.Size()
 			if w > 1020 {
-				ui.Row(c).MarginStart(5).Gap(5).AlignItems(ui.Center).Children(func() {
+				ui.Row(c).MarginStart(5).Gap(space4).AlignItems(ui.Center).Children(func() {
 					ui.Icon(c, iconInfo).Size(11, 11).TextColor(p.text3)
-					ui.Text(c, "每行一个条目 · 支持 ; 与换行分隔").FontSize(9.5).TextColor(p.text3).SingleLine()
+					ui.Text(c, "每行一个条目 · 支持 ; 与换行分隔").FontSize(a.metrics.fontCaption).TextColor(p.text3).SingleLine()
 				})
 			}
 			ui.Spacer(c).Grow(1)
@@ -275,9 +270,9 @@ func (a *App) batchView(c *ui.Context) {
 		// Body
 		ui.Row(c).Grow(1).FillWidth().AlignItems(ui.Stretch).Children(func() {
 			ui.Column(c).Grow(1.12).Basis(0).FillHeight().Background(p.surface).Children(func() {
-				ui.Row(c).Height(38).FillWidth().Padding(0, 13).BorderWidth(0, 0, 1, 0).BorderColor(p.lineSoft).
-					AlignItems(ui.Center).Gap(8).Children(func() {
-					ui.Textf(c, "当前 %d 个条目", len(splitValue(b.originalValue))).FontSize(9.5).TextColor(p.text3)
+				ui.Row(c).Height(a.metrics.paneHeaderH).FillWidth().Padding(0, space12).BorderWidth(0, 0, 1, 0).BorderColor(p.lineSoft).
+					AlignItems(ui.Center).Gap(space8).Children(func() {
+					ui.Textf(c, "当前 %d 个条目", len(splitValue(b.originalValue))).FontSize(a.metrics.fontCaption).TextColor(p.text3)
 					ui.Spacer(c).Grow(1)
 					a.quietButton(c, "整理为多行", iconList, true, func() {
 						b.text = strings.Join(entries, "\n")
@@ -293,15 +288,15 @@ func (a *App) batchView(c *ui.Context) {
 								Gap(batchGutterGap).Padding(batchBoxPadV, batchBoxPadH).Children(func() {
 								ui.Column(c).Width(batchGutterWidth).Gap(0).Children(func() {
 									for i := 1; i <= lineCount; i++ {
-										ui.Textf(c, "%d", i).Font(monoFont).FontSize(batchEditorFont).
-											FixedLineHeight(batchEditorLine).Height(batchEditorLine).
+										ui.Textf(c, "%d", i).Font(monoFont).FontSize(a.metrics.fontBody).
+											FixedLineHeight(a.metrics.lineBody).Height(a.metrics.lineBody).
 											Width(batchGutterWidth).TextColor(p.text3).TextAlign(ui.End)
 									}
 								})
 								ui.ScrollHorizontal(c).Grow(1).Children(func() {
 									ui.TextAreaBase(c, &b.text).Width(textWidth).MinHeight(textHeight).
-										Font(monoFont).FontSize(batchEditorFont).
-										FixedLineHeight(batchEditorLine).NoWrap().
+										Font(monoFont).FontSize(a.metrics.fontBody).
+										FixedLineHeight(a.metrics.lineBody).NoWrap().
 										Placeholder("C:\\Program Files\\Tool\\bin\nC:\\Users\\Ada\\.local\\bin\nC:\\Windows\\System32").
 										Label("编辑变量值").AutoFocus()
 								})
@@ -309,27 +304,27 @@ func (a *App) batchView(c *ui.Context) {
 						})
 					})
 				})
-				ui.Row(c).Height(33).FillWidth().Padding(0, 13).BorderWidth(1, 0, 0, 0).BorderColor(p.lineSoft).
+				ui.Row(c).Height(a.metrics.barH).FillWidth().Padding(0, space12).BorderWidth(1, 0, 0, 0).BorderColor(p.lineSoft).
 					AlignItems(ui.Center).Children(func() {
 					ui.Icon(c, iconShieldDone).Size(11, 11).TextColor(p.success)
-					ui.Text(c, "应用前自动创建备份").FontSize(9.5).TextColor(p.text3).Grow(1)
+					ui.Text(c, "应用前自动创建备份").FontSize(a.metrics.fontCaption).TextColor(p.text3).Grow(1)
 					meta := fmt.Sprintf("%d 个条目", len(entries))
 					if ignored > 0 {
 						meta += fmt.Sprintf(" · 忽略 %d 个空条目", ignored)
 					}
-					ui.Text(c, meta).FontSize(9.5).TextColor(p.text3)
+					ui.Text(c, meta).FontSize(a.metrics.fontCaption).TextColor(p.text3)
 				})
 			})
 			a.divider(c, false, p.line)
 			ui.Column(c).Grow(0.88).Basis(0).FillHeight().Background(p.surface2).Children(func() {
-				ui.Row(c).Height(38).FillWidth().Padding(0, 13).BorderWidth(0, 0, 1, 0).BorderColor(p.lineSoft).
-					AlignItems(ui.Center).Gap(7).Children(func() {
-					ui.Text(c, "解析结果").FontSize(10.5).FontWeight(600).TextColor(p.text2)
-					a.chip(c, fmt.Sprint(len(entries)), p.text3, p.surface3, 9)
+				ui.Row(c).Height(a.metrics.paneHeaderH).FillWidth().Padding(0, space12).BorderWidth(0, 0, 1, 0).BorderColor(p.lineSoft).
+					AlignItems(ui.Center).Gap(space6).Children(func() {
+					ui.Text(c, "解析结果").FontSize(a.metrics.fontSmall).FontWeight(weightSemibold).TextColor(p.text2)
+					a.chip(c, fmt.Sprint(len(entries)), p.text3, p.surface3)
 					ui.Spacer(c).Grow(1)
-					ui.Textf(c, "%s · %d → %d 项", b.target, len(info.original), len(entries)).FontSize(9).TextColor(p.text3).SingleLine()
+					ui.Textf(c, "%s · %d → %d 项", b.target, len(info.original), len(entries)).FontSize(a.metrics.fontCaption).TextColor(p.text3).SingleLine()
 				})
-				ui.Scroll(c).Grow(1).Padding(6, 4, 14, 6).Children(func() {
+				ui.Scroll(c).Grow(1).Padding(space6, space4, space12, space6).Children(func() {
 					a.batchStats(c, info)
 					if len(entries) == 0 && len(info.original) > 0 {
 						a.batchCallout(c, iconAlert, p.dangerSoft, p.danger, "应用后此变量的值为空。")
@@ -345,16 +340,16 @@ func (a *App) batchView(c *ui.Context) {
 							fmt.Sprintf("%d 个重复条目 · %s。重复项通常不会再次生效。", len(uniq), strings.Join(firstN(uniq, 2), "、")))
 					}
 					if len(entries) > 0 {
-						ui.Textf(c, "新值条目  %d", len(entries)).FontSize(8.5).FontWeight(600).
-							LetterSpacing(0.5).TextColor(p.text3).Padding(3, 4)
+						ui.Textf(c, "新值条目  %d", len(entries)).FontSize(a.metrics.fontCaption).FontWeight(weightSemibold).
+							LetterSpacing(0.5).TextColor(p.text3).Padding(space2, space4)
 						for i, e := range entries {
 							isNew := !containsFold(info.original, e)
 							a.batchEntry(c, i+1, e, isNew, false)
 						}
 					}
 					if len(info.removed) > 0 {
-						ui.Textf(c, "将移除  %d", len(info.removed)).FontSize(8.5).FontWeight(600).
-							LetterSpacing(0.5).TextColor(p.text3).Padding(8, 4, 3, 4)
+						ui.Textf(c, "将移除  %d", len(info.removed)).FontSize(a.metrics.fontCaption).FontWeight(weightSemibold).
+							LetterSpacing(0.5).TextColor(p.text3).Padding(space8, space4, space2, space4)
 						for i, e := range info.removed {
 							a.batchEntry(c, i+1, e, false, true)
 						}
@@ -370,7 +365,7 @@ func (a *App) batchView(c *ui.Context) {
 
 func (a *App) batchStats(c *ui.Context, info batchInfo) {
 	p := a.pal
-	ui.Row(c).FillWidth().Gap(4).Padding(2, 4, 7, 4).Children(func() {
+	ui.Row(c).FillWidth().Gap(space4).Padding(space2, space4, space6, space4).Children(func() {
 		if len(info.added) > 0 {
 			a.statChip(c, fmt.Sprintf("+%d 新增", len(info.added)), iconPlus, p.success, p.successSoft)
 		}
@@ -387,16 +382,16 @@ func (a *App) batchStats(c *ui.Context, info batchInfo) {
 }
 
 func (a *App) statChip(c *ui.Context, label string, ic *ui.SVG, fg, bg ui.Color) {
-	ui.Row(c).Padding(3, 5).Radius(radiusControl).Background(bg).Gap(3).AlignItems(ui.Center).Children(func() {
+	ui.Row(c).Padding(space2, space4).Radius(radiusControl).Background(bg).Gap(space2).AlignItems(ui.Center).Children(func() {
 		ui.Icon(c, ic).Size(9, 9).TextColor(fg)
-		ui.Text(c, label).FontSize(9).FontWeight(600).TextColor(fg)
+		ui.Text(c, label).FontSize(a.metrics.fontCaption).FontWeight(weightSemibold).TextColor(fg)
 	})
 }
 
 func (a *App) batchCallout(c *ui.Context, ic *ui.SVG, bg, fg ui.Color, text string) {
-	ui.Row(c).FillWidth().Margin(0, 4, 7, 4).Padding(6, 8).Radius(radiusControl).Background(bg).Gap(6).AlignItems(ui.Start).Children(func() {
+	ui.Row(c).FillWidth().Margin(0, space4, space6, space4).Padding(space6, space8).Radius(radiusControl).Background(bg).Gap(space6).AlignItems(ui.Start).Children(func() {
 		ui.Icon(c, ic).Size(10, 10).TextColor(fg)
-		ui.Text(c, text).FontSize(9.5).TextColor(fg).MaxLines(4)
+		ui.Text(c, text).FontSize(a.metrics.fontCaption).TextColor(fg).MaxLines(4)
 	})
 }
 
@@ -418,13 +413,13 @@ func (a *App) batchEntry(c *ui.Context, index int, text string, added, removed b
 		fg = p.danger
 		mark = "−"
 	}
-	ui.Row(c).FillWidth().Margin(0, 0, 3, 0).Padding(4, 3).Radius(radiusControl).Background(bg).Border(1, border).
-		AlignItems(ui.Center).Gap(3).Children(func() {
-		ui.Textf(c, "%02d", index).Font(monoFont).FontSize(8.5).TextColor(p.text3).Width(16).TextAlign(ui.End)
+	ui.Row(c).FillWidth().Margin(0, 0, space2, 0).Padding(space4, space2).Radius(radiusControl).Background(bg).Border(1, border).
+		AlignItems(ui.Center).Gap(space2).Children(func() {
+		ui.Textf(c, "%02d", index).Font(monoFont).FontSize(a.metrics.fontCaption).TextColor(p.text3).Width(16).TextAlign(ui.End)
 		if mark != "" {
-			ui.Text(c, mark).Font(monoFont).FontSize(11).TextColor(fg).Width(10).TextAlign(ui.Center)
+			ui.Text(c, mark).Font(monoFont).FontSize(a.metrics.fontSmall).TextColor(fg).Width(10).TextAlign(ui.Center)
 		}
-		ui.Text(c, text).Font(monoFont).FontSize(10.5).TextColor(fg).Grow(1).MinWidth(0)
+		ui.Text(c, text).Font(monoFont).FontSize(a.metrics.fontSmall).TextColor(fg).Grow(1).MinWidth(0)
 	})
 }
 
@@ -441,7 +436,7 @@ func (a *App) batchEditorTextWidth(c *ui.Context, text string) float32 {
 	if widest == "" {
 		return viewport
 	}
-	w, _ := c.MeasureText(0, ui.Span{Text: widest, Font: monoFont, Size: batchEditorFont})
+	w, _ := c.MeasureText(0, ui.Span{Text: widest, Font: monoFont, Size: a.metrics.fontBody})
 	if w += 12; w < viewport {
 		return viewport
 	}
@@ -455,17 +450,17 @@ func (a *App) batchEditorTextWidth(c *ui.Context, text string) float32 {
 func (a *App) batchEditorViewport(c *ui.Context) (width, height float32) {
 	w, h := c.Size()
 	titleBar := c.TitleBar().Height
-	if titleBar < batchTitleBarHeight {
-		titleBar = batchTitleBarHeight
+	if titleBar < a.metrics.titleBarH {
+		titleBar = a.metrics.titleBarH
 	}
 	left := (w - batchDividerWidth) * batchLeftFlex / (batchLeftFlex + batchRightFlex)
 	width = left - 2*batchBodyPadH - 2*batchBoxBorder - 2*batchBoxPadH - batchGutterWidth - batchGutterGap
-	height = h - titleBar - batchHeadHeight - batchPaneHeadHeight - batchPaneFootHeight -
+	height = h - titleBar - a.metrics.pageHeaderH - a.metrics.paneHeaderH - a.metrics.barH -
 		2*batchBodyPadV - 2*batchBoxBorder - 2*batchBoxPadV
 	if width < 120 {
 		width = 120
 	}
-	if floor := 3 * batchEditorLine; height < floor {
+	if floor := 3 * a.metrics.lineBody; height < floor {
 		height = floor
 	}
 	return width, height

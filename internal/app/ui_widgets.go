@@ -54,8 +54,8 @@ const (
 
 func (a *App) button(c *ui.Context, label string, s *ui.SVG, kind buttonKind, enabled bool, onClick func()) {
 	p := a.pal
-	h := float32(31)
-	px := float32(10)
+	h := a.metrics.controlMd
+	px := space12
 	fg := p.text2
 	bg := p.surface
 	border := p.line
@@ -76,8 +76,8 @@ func (a *App) button(c *ui.Context, label string, s *ui.SVG, kind buttonKind, en
 		border = p.danger
 		hover = p.danger
 	} else if kind == buttonText {
-		h = 22
-		px = 5
+		h = a.metrics.controlXs
+		px = space6
 		fg = p.accent
 		bg = ui.Transparent
 		border = ui.Transparent
@@ -92,8 +92,8 @@ func (a *App) button(c *ui.Context, label string, s *ui.SVG, kind buttonKind, en
 			border = ui.Transparent
 		}
 	}
-	b := ui.ButtonBase(c).Height(h).Padding(0, px).Radius(radiusControl).Gap(6).Cursor(ui.CursorPointer)
-	b.Background(bg).Border(1, border).TextColor(fg).FontSize(12).FontWeight(600)
+	b := ui.ButtonBase(c).Height(h).Padding(0, px).Radius(radiusControl).Gap(space6).Cursor(ui.CursorPointer)
+	b.Background(bg).Border(1, border).TextColor(fg).FontSize(a.metrics.fontBody).FontWeight(weightSemibold)
 	b.Label(label)
 	if !enabled {
 		b.Disabled(true)
@@ -105,7 +105,7 @@ func (a *App) button(c *ui.Context, label string, s *ui.SVG, kind buttonKind, en
 		if s != nil {
 			ui.Icon(c, s).Size(14, 14).TextColor(fg)
 		}
-		ui.Text(c, label).FontSize(12).FontWeight(600).TextColor(fg).SingleLine()
+		ui.Text(c, label).FontSize(a.metrics.fontBody).FontWeight(weightSemibold).TextColor(fg).SingleLine()
 	})
 	if enabled && b.Clicked() && onClick != nil {
 		onClick()
@@ -116,14 +116,14 @@ func (a *App) textButton(c *ui.Context, label string, enabled bool, onClick func
 	a.button(c, label, nil, buttonText, enabled, onClick)
 }
 
-func (a *App) chip(c *ui.Context, text string, fg, bg ui.Color, size float32) ui.Element {
-	return ui.Row(c).Padding(1.5, 5).Radius(radiusPill).Background(bg).AlignItems(ui.Center).Children(func() {
-		ui.Text(c, text).FontSize(size).FontWeight(600).TextColor(fg).SingleLine()
+func (a *App) chip(c *ui.Context, text string, fg, bg ui.Color) ui.Element {
+	return ui.Row(c).Padding(1.5, space4).Radius(radiusPill).Background(bg).AlignItems(ui.Center).Children(func() {
+		ui.Text(c, text).FontSize(a.metrics.fontCaption).FontWeight(weightSemibold).TextColor(fg).SingleLine()
 	})
 }
 
 func (a *App) sectionLabel(c *ui.Context, text string) {
-	ui.Text(c, text).FontSize(9.5).FontWeight(600).LetterSpacing(0.6).TextColor(a.pal.text3).Padding(0, 8)
+	ui.Text(c, text).FontSize(a.metrics.fontCaption).FontWeight(weightSemibold).LetterSpacing(0.6).TextColor(a.pal.text3).Padding(0, space8)
 }
 
 func (a *App) scopePill(c *ui.Context, scope Scope) {
@@ -131,13 +131,13 @@ func (a *App) scopePill(c *ui.Context, scope Scope) {
 	if scope == ScopeSystem {
 		fg, bg = a.pal.warn, a.pal.warnSoft
 	}
-	ui.Row(c).Background(bg).Radius(radiusPill).Padding(3, 7).Gap(4).AlignItems(ui.Center).Children(func() {
+	ui.Row(c).Background(bg).Radius(radiusPill).Padding(space2, space6).Gap(space4).AlignItems(ui.Center).Children(func() {
 		s := iconUser
 		if scope == ScopeSystem {
 			s = iconShield
 		}
 		ui.Icon(c, s).Size(10, 10).TextColor(fg)
-		ui.Text(c, scope.String()).FontSize(9.5).FontWeight(600).TextColor(fg)
+		ui.Text(c, scope.String()).FontSize(a.metrics.fontCaption).FontWeight(weightSemibold).TextColor(fg)
 	})
 }
 
@@ -225,7 +225,7 @@ func (a *App) richValue(c *ui.Context, value, query string, size float32, color 
 
 func (a *App) richName(c *ui.Context, name, query string) ui.Element {
 	spans := a.spansForText(name, query, a.pal.text, false)
-	return ui.RichText(c, spans...).Font(monoFont).FontSize(11.5).FontWeight(600).TextColor(a.pal.text).SingleLine()
+	return ui.RichText(c, spans...).Font(monoFont).FontSize(a.metrics.fontBody).FontWeight(weightSemibold).TextColor(a.pal.text).SingleLine()
 }
 
 func (a *App) divider(c *ui.Context, horizontal bool, color ui.Color) ui.Element {
@@ -237,16 +237,16 @@ func (a *App) divider(c *ui.Context, horizontal bool, color ui.Color) ui.Element
 
 func (a *App) quietButton(c *ui.Context, label string, s *ui.SVG, enabled bool, onClick func()) {
 	p := a.pal
-	b := ui.ButtonBase(c).Height(28).Padding(0, 8).Radius(radiusControl).Gap(6).Cursor(ui.CursorPointer)
-	b.Label(label).FontSize(10.5).TextColor(p.text2)
+	b := ui.ButtonBase(c).Height(a.metrics.controlSm).Padding(0, space8).Radius(radiusControl).Gap(space6).Cursor(ui.CursorPointer)
+	b.Label(label).FontSize(a.metrics.fontSmall).TextColor(p.text2)
 	if s != nil {
 		b.Children(func() {
 			ui.Icon(c, s).Size(13, 13).TextColor(p.text3)
-			ui.Text(c, label).FontSize(10.5).TextColor(p.text2)
+			ui.Text(c, label).FontSize(a.metrics.fontSmall).TextColor(p.text2)
 		})
 	} else {
 		b.Children(func() {
-			ui.Text(c, label).FontSize(10.5).TextColor(p.text2)
+			ui.Text(c, label).FontSize(a.metrics.fontSmall).TextColor(p.text2)
 		})
 	}
 	if !enabled {

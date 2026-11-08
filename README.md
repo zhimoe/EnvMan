@@ -76,6 +76,44 @@ go mod tidy
 go mod vendor
 ```
 
+## 界面尺寸约定
+
+界面尺寸集中在两个文件：`internal/app/metrics.go`（字号、间距、控件高度）和
+`internal/app/theme.go`（圆角、配色）。改一处即可全局生效，不要在新代码里写字面量。
+
+**圆角**：沿用 Windows Fluent 的两档语义——控件 4、浮层 8，胶囊为全圆。
+图标方块按尺寸取 4（<32）或 8（≥32）。
+
+**字号**：共 5 档，随系统"文本缩放"等比放大。
+
+| token | 值 | 用途 |
+| --- | --- | --- |
+| `fontCaption` | 10 | 分区标签、页脚、行内徽章 |
+| `fontSmall` | 11 | 提示、callout、次要说明 |
+| `fontBody` | 12 | 默认：行值、按钮、导航项 |
+| `fontSubtitle` | 14 | 抽屉、弹窗、空状态标题 |
+| `fontTitle` | 18 | 页面标题 |
+
+**间距**：4 栅格加一个 2 半步，`space2 / 4 / 6 / 8 / 12 / 16 / 24 / 32`。
+所有 `Gap` 与容器 `Padding` 都取自这一档；组件内部的光学微调（如 1px、1.5px）
+保留字面量并就近注释。
+
+**高度**：不拍数字，由行框推导。Segoe UI 的行框约为字号的 1.33 倍，正文 12 →
+行框 16，再加垂直内边距：
+
+| token | 值 | 公式 |
+| --- | --- | --- |
+| `controlXs` | 24 | 行框 + 2×4（行内按钮、图标按钮） |
+| `controlSm` | 28 | 行框 + 2×6（轻按钮、行内输入） |
+| `controlMd` | 32 | 行框 + 2×8（主次按钮、输入框） |
+| `rowH` / `barH` | 32 | 行框 + 2×8（表格行、表头表尾、横幅） |
+| `titleBarH` / `paneHeaderH` | 40 | 控件 + 2×8 |
+| `pageHeaderH` | 48 | 控件 + 2×8 |
+| `sheetFooterH` | 56 | 控件 + 3×8 |
+
+原则：**能由内边距算出来的高度就不写 `Height`**，只有必须固定或等宽的控件
+（图标按钮、`List` 行高）才指定高度，这样文本缩放时布局不会错位。
+
 ## Windows 数据与权限
 
 - 用户变量：`HKCU\Environment`
@@ -89,7 +127,8 @@ UAC。注册表中的非字符串值不会被 EnvMan 删除。
 ## 项目结构
 
 - `cmd/envman/`：程序入口；`mygo.json` 的 `main` 字段指向此包。
-- `internal/app/`：MyGo 原生界面、应用状态和提交/撤销等流程编排。
+- `internal/app/`：MyGo 原生界面（`metrics.go` 尺寸、`theme.go` 配色与圆角）、
+  应用状态和提交/撤销等流程编排。
 - `internal/domain/`：环境变量领域类型、差异计算和并发变更合并。
 - `internal/environment/`：Windows 注册表后端与非 Windows 内存后端。
 - `internal/storage/`：快照、待提权变更和设置的 JSON 持久化。

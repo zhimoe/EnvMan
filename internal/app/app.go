@@ -38,6 +38,7 @@ type App struct {
 	themeMode ThemeMode
 	lastDark  bool
 	pal       palette
+	metrics   metrics
 
 	search ui.Handle
 

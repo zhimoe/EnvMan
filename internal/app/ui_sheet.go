@@ -104,7 +104,7 @@ func (a *App) sheetView(c *ui.Context) {
 	}
 	p := a.pal
 	ui.Overlay(c, func() {
-		back := ui.Row(c).Absolute().Left(0).Top(42).Right(0).Bottom(0).Justify(ui.End).
+		back := ui.Row(c).Absolute().Left(0).Top(a.metrics.titleBarH).Right(0).Bottom(0).Justify(ui.End).
 			Background(ui.RGBA(0, 0, 0, 0.32)).Modal()
 		back.Children(func() {
 			panel := ui.Column(c).Width(490).FillHeight().Background(p.surface).
@@ -125,30 +125,30 @@ func (a *App) sheetView(c *ui.Context) {
 func (a *App) sheetContent(c *ui.Context, s *sheetState) {
 	p := a.pal
 	// Header
-	ui.Row(c).Height(52).FillWidth().Padding(0, 12, 0, 18).
-		BorderWidth(0, 0, 1, 0).BorderColor(p.line).AlignItems(ui.Center).Gap(9).Children(func() {
+	ui.Row(c).Height(a.metrics.pageHeaderH).FillWidth().Padding(0, space12, 0, space16).
+		BorderWidth(0, 0, 1, 0).BorderColor(p.line).AlignItems(ui.Center).Gap(space8).Children(func() {
 		title := "编辑变量"
 		if s.create {
 			title = "新建变量"
 		}
-		ui.Text(c, title).FontSize(14).FontWeight(650).TextColor(p.text)
+		ui.Text(c, title).FontSize(a.metrics.fontSubtitle).FontWeight(weightSemibold).TextColor(p.text)
 		a.scopePill(c, s.scope)
 		ui.Spacer(c).Grow(1)
-		a.iconButton(c, iconX, "关闭（Esc）", 25, func() { a.closeSheet() })
+		a.iconButton(c, iconX, "关闭（Esc）", a.metrics.controlXs, func() { a.closeSheet() })
 	})
 
-	ui.Scroll(c).Grow(1).Padding(16, 18, 22, 18).Children(func() {
+	ui.Scroll(c).Grow(1).Padding(space16, space16, space24, space16).Children(func() {
 		// Name
 		ui.Row(c).FillWidth().AlignItems(ui.Center).Justify(ui.SpaceBetween).Children(func() {
-			ui.Text(c, "变量名").FontSize(11).FontWeight(600).TextColor(p.text2)
+			ui.Text(c, "变量名").FontSize(a.metrics.fontSmall).FontWeight(weightSemibold).TextColor(p.text2)
 			hint := "不区分大小写"
 			if !s.create {
 				hint = "名称不可修改"
 			}
-			ui.Text(c, hint).FontSize(10).TextColor(p.text3)
+			ui.Text(c, hint).FontSize(a.metrics.fontCaption).TextColor(p.text3)
 		})
-		ui.Box(c).Height(6)
-		nameInput := ui.TextInput(c, &s.name).Height(34).Font(monoFont).FontSize(12).
+		ui.Box(c).Height(space6)
+		nameInput := ui.TextInput(c, &s.name).Height(a.metrics.controlMd).Font(monoFont).FontSize(a.metrics.fontBody).
 			Placeholder("例如：JAVA_HOME").Label("变量名")
 		if !s.create {
 			nameInput.ReadOnly(true)
@@ -156,17 +156,17 @@ func (a *App) sheetContent(c *ui.Context, s *sheetState) {
 			nameInput.AutoFocus()
 		}
 		if s.nameError != "" {
-			ui.Box(c).Height(4)
-			ui.Row(c).Gap(4).AlignItems(ui.Center).Children(func() {
+			ui.Box(c).Height(space4)
+			ui.Row(c).Gap(space4).AlignItems(ui.Center).Children(func() {
 				ui.Icon(c, iconAlert).Size(11, 11).TextColor(p.danger)
-				ui.Text(c, s.nameError).FontSize(10.5).TextColor(p.danger)
+				ui.Text(c, s.nameError).FontSize(a.metrics.fontSmall).TextColor(p.danger)
 			})
 		}
 
 		// Value label and mode
-		ui.Box(c).Height(16)
+		ui.Box(c).Height(space16)
 		ui.Row(c).FillWidth().AlignItems(ui.Center).Justify(ui.SpaceBetween).Children(func() {
-			ui.Text(c, "值").FontSize(11).FontWeight(600).TextColor(p.text2)
+			ui.Text(c, "值").FontSize(a.metrics.fontSmall).FontWeight(weightSemibold).TextColor(p.text2)
 			seg := ui.Segmented(c, &s.valueMode, "文本", "列表").Label("值编辑方式")
 			_ = seg
 			if seg.Changed() {
@@ -181,12 +181,12 @@ func (a *App) sheetContent(c *ui.Context, s *sheetState) {
 				}
 			}
 		})
-		ui.Box(c).Height(6)
+		ui.Box(c).Height(space6)
 
 		if s.valueMode == 1 {
 			a.sheetValueList(c, s)
 		} else {
-			ui.TextArea(c, &s.value).Height(132).Font(monoFont).FontSize(12).
+			ui.TextArea(c, &s.value).Height(8 * a.metrics.lineBody).Font(monoFont).FontSize(a.metrics.fontBody).
 				Placeholder("可以是空值，也可以包含 %USERPROFILE% 这样的引用")
 		}
 
@@ -195,7 +195,7 @@ func (a *App) sheetContent(c *ui.Context, s *sheetState) {
 		if value == "" {
 			entries = nil
 		}
-		ui.Box(c).Height(5)
+		ui.Box(c).Height(space4)
 		ui.Row(c).FillWidth().AlignItems(ui.Center).Justify(ui.SpaceBetween).Children(func() {
 			count := len(entries)
 			meta := "当前为空值"
@@ -206,14 +206,14 @@ func (a *App) sheetContent(c *ui.Context, s *sheetState) {
 			} else if value != "" {
 				meta = fmt.Sprintf("单值 · %d 个字符", len([]rune(value)))
 			}
-			ui.Text(c, meta).FontSize(9.5).TextColor(p.text3)
-			ui.Text(c, "保存前自动备份").FontSize(9.5).TextColor(p.text3)
+			ui.Text(c, meta).FontSize(a.metrics.fontCaption).TextColor(p.text3)
+			ui.Text(c, "保存前自动备份").FontSize(a.metrics.fontCaption).TextColor(p.text3)
 		})
 
 		a.sheetWarnings(c, entries)
 
 		if hasRef(value) {
-			ui.Box(c).Height(8)
+			ui.Box(c).Height(space8)
 			a.resolvePreview(c, value)
 		}
 
@@ -223,9 +223,9 @@ func (a *App) sheetContent(c *ui.Context, s *sheetState) {
 		}
 
 		// Advanced facts: they fill out the form and make the value type visible.
-		ui.Box(c).Height(14)
+		ui.Box(c).Height(space12)
 		ui.Box(c).Height(1).FillWidth().Background(p.lineSoft)
-		ui.Box(c).Height(9)
+		ui.Box(c).Height(space8)
 		typ := valueType("", value)
 		if !s.create {
 			if v, ok := a.findVariable(s.scope, s.originalName); ok && v.Type != "" {
@@ -240,10 +240,10 @@ func (a *App) sheetContent(c *ui.Context, s *sheetState) {
 		a.sheetInfoRow(c, "作用范围", s.scope.String()+" · 新终端生效")
 
 		if !s.create {
-			ui.Box(c).Height(18)
-			ui.Row(c).FillWidth().BorderWidth(1, 0, 0, 0).BorderColor(p.line).Padding(13, 0, 0, 0).
+			ui.Box(c).Height(space16)
+			ui.Row(c).FillWidth().BorderWidth(1, 0, 0, 0).BorderColor(p.line).Padding(space12, 0, 0, 0).
 				AlignItems(ui.Center).Children(func() {
-				ui.Text(c, "删除后，新终端不再包含此变量").FontSize(9.5).TextColor(p.text3).Grow(1)
+				ui.Text(c, "删除后，新终端不再包含此变量").FontSize(a.metrics.fontCaption).TextColor(p.text3).Grow(1)
 				a.dangerTextButton(c, "删除变量", func() {
 					v, ok := a.findVariable(s.scope, s.originalName)
 					if ok {
@@ -255,11 +255,11 @@ func (a *App) sheetContent(c *ui.Context, s *sheetState) {
 	})
 
 	// Footer
-	ui.Row(c).Height(58).FillWidth().Padding(0, 16).BorderWidth(1, 0, 0, 0).BorderColor(p.line).
-		AlignItems(ui.Center).Gap(8).Children(func() {
-		ui.Row(c).Gap(5).AlignItems(ui.Center).Children(func() {
+	ui.Row(c).Height(a.metrics.sheetFooterH).FillWidth().Padding(0, space16).BorderWidth(1, 0, 0, 0).BorderColor(p.line).
+		AlignItems(ui.Center).Gap(space8).Children(func() {
+		ui.Row(c).Gap(space4).AlignItems(ui.Center).Children(func() {
 			ui.Icon(c, iconShieldDone).Size(12, 12).TextColor(p.success)
-			ui.Text(c, "保存前自动备份").FontSize(9.5).TextColor(p.text3)
+			ui.Text(c, "保存前自动备份").FontSize(a.metrics.fontCaption).TextColor(p.text3)
 		})
 		ui.Spacer(c).Grow(1)
 		a.button(c, "取消", nil, buttonSecondary, true, func() { a.closeSheet() })
@@ -273,21 +273,21 @@ func (a *App) sheetContent(c *ui.Context, s *sheetState) {
 
 func (a *App) sheetInfoRow(c *ui.Context, label, value string) {
 	p := a.pal
-	ui.Row(c).FillWidth().Padding(2, 0).Gap(8).Children(func() {
-		ui.Text(c, label).FontSize(9.5).TextColor(p.text3).Width(58)
-		ui.Text(c, value).FontSize(10).TextColor(p.text2).Grow(1)
+	ui.Row(c).FillWidth().Padding(space2, 0).Gap(space8).Children(func() {
+		ui.Text(c, label).FontSize(a.metrics.fontCaption).TextColor(p.text3).Width(58)
+		ui.Text(c, value).FontSize(a.metrics.fontCaption).TextColor(p.text2).Grow(1)
 	})
 }
 
 func (a *App) sheetValueList(c *ui.Context, s *sheetState) {
 	p := a.pal
-	ui.Column(c).FillWidth().Radius(radiusOverlay).Background(p.surface2).Border(1, p.line).Padding(2).Children(func() {
+	ui.Column(c).FillWidth().Radius(radiusOverlay).Background(p.surface2).Border(1, p.line).Padding(space2).Children(func() {
 		for i := 0; i < len(s.entries); i++ {
 			i := i
-			row := ui.Row(c).Height(32).FillWidth().Radius(radiusControl).Padding(0, 1).Gap(2).AlignItems(ui.Center)
+			row := ui.Row(c).Height(a.metrics.rowH).FillWidth().Radius(radiusControl).Padding(0, 1).Gap(space2).AlignItems(ui.Center)
 			row.Children(func() {
-				ui.Textf(c, "%02d", i+1).Font(monoFont).FontSize(9).TextColor(p.text3).Width(15).TextAlign(ui.End)
-				ui.TextInput(c, &s.entries[i]).Height(27).Font(monoFont).FontSize(11.5).
+				ui.Textf(c, "%02d", i+1).Font(monoFont).FontSize(a.metrics.fontCaption).TextColor(p.text3).Width(15).TextAlign(ui.End)
+				ui.TextInput(c, &s.entries[i]).Height(a.metrics.controlSm).Font(monoFont).FontSize(a.metrics.fontBody).
 					Label(fmt.Sprintf("条目 %d", i+1)).Grow(1)
 				up := a.iconButtonBase(c, iconChevronDown, "上移", 18)
 				up.Rotate(180)
@@ -316,12 +316,12 @@ func (a *App) sheetValueList(c *ui.Context, s *sheetState) {
 				row.Background(p.surface)
 			}
 		}
-		ui.Box(c).Height(4)
-		add := ui.ButtonBase(c).Height(29).FillWidth().Radius(radiusControl).Center().Gap(5).Cursor(ui.CursorPointer)
+		ui.Box(c).Height(space4)
+		add := ui.ButtonBase(c).Height(a.metrics.controlSm).FillWidth().Radius(radiusControl).Center().Gap(space4).Cursor(ui.CursorPointer)
 		add.Label("添加条目")
 		add.Children(func() {
 			ui.Icon(c, iconPlus).Size(12, 12).TextColor(p.text3)
-			ui.Text(c, "添加条目").FontSize(10).TextColor(p.text3)
+			ui.Text(c, "添加条目").FontSize(a.metrics.fontCaption).TextColor(p.text3)
 		})
 		if add.Hovered() {
 			add.Background(p.surface)
@@ -344,16 +344,16 @@ func (a *App) sheetWarnings(c *ui.Context, entries []string) {
 		seen[k] = true
 	}
 	if len(dup) > 0 {
-		ui.Box(c).Height(8)
+		ui.Box(c).Height(space8)
 		a.sheetCallout(c, iconAlert, p.warnSoft, p.warnSoft, p.warn,
 			fmt.Sprintf("%d 个重复条目 · %s。重复项通常不会再次生效。", len(dup), strings.Join(dup[:min(2, len(dup))], "、")))
 	}
 }
 
 func (a *App) sheetCallout(c *ui.Context, ic *ui.SVG, bg, border, fg ui.Color, text string) {
-	ui.Row(c).FillWidth().Padding(7, 9).Radius(radiusControl).Background(bg).Border(1, border).Gap(6).AlignItems(ui.Start).Children(func() {
+	ui.Row(c).FillWidth().Padding(space6, space8).Radius(radiusControl).Background(bg).Border(1, border).Gap(space6).AlignItems(ui.Start).Children(func() {
 		ui.Icon(c, ic).Size(11, 11).TextColor(fg)
-		ui.Text(c, text).FontSize(10).TextColor(fg).MaxLines(4)
+		ui.Text(c, text).FontSize(a.metrics.fontCaption).TextColor(fg).MaxLines(4)
 	})
 }
 
@@ -363,10 +363,10 @@ func (a *App) resolvePreview(c *ui.Context, value string) {
 	if expanded == value {
 		return
 	}
-	ui.Row(c).FillWidth().Padding(7, 9).Radius(radiusControl).Background(p.surface2).Border(1, p.line).Children(func() {
-		ui.Column(c).Grow(1).Gap(2).Children(func() {
-			ui.Text(c, "解析预览").FontSize(8.5).FontWeight(600).LetterSpacing(0.4).TextColor(p.text3)
-			ui.Text(c, expanded).Font(monoFont).FontSize(10.5).TextColor(p.text2)
+	ui.Row(c).FillWidth().Padding(space6, space8).Radius(radiusControl).Background(p.surface2).Border(1, p.line).Children(func() {
+		ui.Column(c).Grow(1).Gap(space2).Children(func() {
+			ui.Text(c, "解析预览").FontSize(a.metrics.fontCaption).FontWeight(weightSemibold).LetterSpacing(0.4).TextColor(p.text3)
+			ui.Text(c, expanded).Font(monoFont).FontSize(a.metrics.fontSmall).TextColor(p.text2)
 		})
 	})
 }
