@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -25,89 +24,6 @@ const (
 	batchLeftFlex     float32 = 1.12
 	batchRightFlex    float32 = 0.88
 )
-
-type batchInfo struct {
-	original   []string
-	added      []string
-	removed    []string
-	reordered  bool
-	hasChanges bool
-	duplicates []string
-}
-
-func batchParse(text string) (entries []string, ignored int) {
-	text = strings.ReplaceAll(text, "\r\n", "\n")
-	for p := range strings.SplitSeq(strings.ReplaceAll(text, ";", "\n"), "\n") {
-		p = strings.TrimSpace(p)
-		if p == "" {
-			ignored++
-			continue
-		}
-		entries = append(entries, p)
-	}
-	return entries, ignored
-}
-
-func normalizeEntry(s string) string {
-	return strings.ToLower(strings.TrimSpace(s))
-}
-
-func analyzeBatch(originalValue, text string) batchInfo {
-	original := splitValue(originalValue)
-	if originalValue == "" {
-		original = nil
-	}
-	entries, _ := batchParse(text)
-	oldKeys := make(map[string]bool)
-	for _, o := range original {
-		oldKeys[normalizeEntry(o)] = true
-	}
-	newKeys := make(map[string]bool)
-	for _, n := range entries {
-		newKeys[normalizeEntry(n)] = true
-	}
-	info := batchInfo{original: original}
-	for _, e := range entries {
-		if !oldKeys[normalizeEntry(e)] {
-			info.added = append(info.added, e)
-		}
-	}
-	for _, o := range original {
-		if !newKeys[normalizeEntry(o)] {
-			info.removed = append(info.removed, o)
-		}
-	}
-	commonOld := make([]string, 0)
-	seenOld := make(map[string]bool)
-	for _, o := range original {
-		key := normalizeEntry(o)
-		if newKeys[key] && !seenOld[key] {
-			commonOld = append(commonOld, key)
-			seenOld[key] = true
-		}
-	}
-	commonNew := make([]string, 0)
-	seenNew := make(map[string]bool)
-	for _, n := range entries {
-		key := normalizeEntry(n)
-		if oldKeys[key] && !seenNew[key] {
-			commonNew = append(commonNew, key)
-			seenNew[key] = true
-		}
-	}
-	info.reordered = strings.Join(commonOld, "\x00") != strings.Join(commonNew, "\x00")
-	// Saving compares exact values; path duplicate detection remains semantic.
-	info.hasChanges = !slices.Equal(original, entries)
-	seen := make(map[string]bool)
-	for _, n := range entries {
-		k := normalizeEntry(n)
-		if seen[k] {
-			info.duplicates = append(info.duplicates, n)
-		}
-		seen[k] = true
-	}
-	return info
-}
 
 func (a *App) openBatch(preferred string) {
 	if a.batch != nil {
@@ -146,46 +62,6 @@ func (a *App) openBatch(preferred string) {
 	}
 	a.sheet = nil
 	a.backupsOpen = false
-}
-
-func (a *App) closeBatch() {
-	b := a.batch
-	if b == nil {
-		return
-	}
-	info := analyzeBatch(b.originalValue, b.text)
-	if info.hasChanges {
-		a.modal = &modalState{
-			icon:    iconInfo,
-			title:   "放弃批量编辑？",
-			message: "粘贴的内容还没有应用，离开后会丢失。",
-			confirm: "放弃更改",
-			cancel:  "继续编辑",
-			danger:  true,
-			onConfirm: func() {
-				a.batch = nil
-			},
-		}
-		return
-	}
-	a.batch = nil
-}
-
-func (a *App) switchBatchTarget(name string) {
-	b := a.batch
-	if b == nil || name == b.target {
-		return
-	}
-	target, ok := a.findVariable(b.scope, name)
-	if !ok {
-		return
-	}
-	b.target = target.Name
-	b.originalValue = target.Value
-	b.text = strings.Join(splitValue(target.Value), "\n")
-	if target.Value == "" {
-		b.text = ""
-	}
 }
 
 func (a *App) batchView(c *ui.Context) {
@@ -229,21 +105,7 @@ func (a *App) batchView(c *ui.Context) {
 			if sel.Changed() && b.target != oldTarget {
 				next := b.target
 				b.target = oldTarget
-				if info.hasChanges {
-					a.modal = &modalState{
-						icon:    iconInfo,
-						title:   "切换变量？",
-						message: "切换后，当前粘贴的内容不会保留。",
-						confirm: "放弃并切换",
-						cancel:  "继续编辑",
-						danger:  true,
-						onConfirm: func() {
-							a.switchBatchTarget(next)
-						},
-					}
-				} else {
-					a.switchBatchTarget(next)
-				}
+				a.switchBatchTarget(next)
 			}
 			w, _ := c.Size()
 			if w > 1020 {
@@ -352,6 +214,9 @@ func (a *App) batchView(c *ui.Context) {
 			})
 		})
 	})
+	if a.modal != nil {
+		return
+	}
 	c.OnShortcut(0, ui.KeyEscape, func() { a.closeBatch() })
 	c.OnShortcut(ui.Cmd, ui.KeyEnter, func() { a.applyBatch(c) })
 	c.OnShortcut(ui.Cmd, ui.KeyS, func() { a.applyBatch(c) })
@@ -486,32 +351,4 @@ func (a *App) applyBatch(c *ui.Context) {
 	}
 	value := strings.Join(entries, ";")
 	a.applyBatchValue(b.scope, b.target, value)
-}
-
-func containsFold(list []string, s string) bool {
-	for _, v := range list {
-		if normalizeEntry(v) == normalizeEntry(s) {
-			return true
-		}
-	}
-	return false
-}
-
-func uniqueStrings(in []string) []string {
-	seen := make(map[string]bool)
-	var out []string
-	for _, s := range in {
-		if !seen[normalizeEntry(s)] {
-			seen[normalizeEntry(s)] = true
-			out = append(out, s)
-		}
-	}
-	return out
-}
-
-func firstN(in []string, n int) []string {
-	if len(in) <= n {
-		return in
-	}
-	return in[:n]
 }

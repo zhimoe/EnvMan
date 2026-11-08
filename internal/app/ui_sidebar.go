@@ -92,7 +92,7 @@ func (a *App) adminCard(c *ui.Context) {
 	icoBg := p.warnSoft
 	icoFg := p.warn
 	title := "标准权限"
-	sub := "系统变量为只读"
+	sub := "保存系统变量时提权"
 	if a.admin {
 		bg = p.successSoft
 		border = p.successSoft

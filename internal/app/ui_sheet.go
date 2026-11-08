@@ -15,7 +15,7 @@ func (a *App) openEdit(v Variable, listMode bool) {
 	if listMode || isMultiValue(v.Value) {
 		mode = 1
 	}
-	entries := splitValue(v.Value)
+	entries := strings.Split(v.Value, ";")
 	if len(entries) == 0 {
 		entries = []string{""}
 	}
@@ -47,54 +47,11 @@ func (a *App) openCreate(prefill string) {
 	a.backupsOpen = false
 }
 
-func (s *sheetState) cleanEntries() []string {
-	var out []string
-	for _, e := range s.entries {
-		e = strings.TrimSpace(e)
-		if e != "" {
-			out = append(out, e)
-		}
-	}
-	return out
-}
-
-func (s *sheetState) currentValue() string {
-	if s.valueMode == 1 {
-		return strings.Join(s.cleanEntries(), ";")
-	}
-	return s.value
-}
-
-func (a *App) sheetDirty() bool {
-	s := a.sheet
-	if s == nil {
-		return false
-	}
-	if s.create {
-		return strings.TrimSpace(s.name) != "" || s.currentValue() != ""
-	}
-	return strings.TrimSpace(s.name) != s.originalName || s.currentValue() != s.originalValue
-}
-
 func (a *App) closeSheet() {
 	if a.sheet == nil {
 		return
 	}
-	if a.sheetDirty() {
-		a.modal = &modalState{
-			icon:    iconInfo,
-			title:   "放弃未保存的更改？",
-			message: "关闭后，这个面板中的修改不会写入环境变量。",
-			confirm: "放弃更改",
-			cancel:  "继续编辑",
-			danger:  true,
-			onConfirm: func() {
-				a.sheet = nil
-			},
-		}
-		return
-	}
-	a.sheet = nil
+	a.confirmDiscard(a.sheetDirty(), "放弃未保存的更改？", "关闭后，这个面板中的修改不会写入环境变量。", "放弃更改", func() { a.sheet = nil })
 }
 
 func (a *App) sheetView(c *ui.Context) {
@@ -113,6 +70,9 @@ func (a *App) sheetView(c *ui.Context) {
 			panel.Children(func() {
 				a.sheetContent(c, s)
 			})
+			if a.modal != nil {
+				return
+			}
 			if back.OverlayShortcut(ui.Cmd, ui.KeyS) || back.OverlayShortcut(ui.Cmd, ui.KeyEnter) {
 				a.saveSheet(c)
 			} else if panel.PressedOutside() || back.OverlayShortcut(0, ui.KeyEscape) {
@@ -170,15 +130,7 @@ func (a *App) sheetContent(c *ui.Context, s *sheetState) {
 			seg := ui.Segmented(c, &s.valueMode, "文本", "列表").Label("值编辑方式")
 			_ = seg
 			if seg.Changed() {
-				if s.valueMode == 1 {
-					entries := splitValue(s.value)
-					if len(entries) == 0 {
-						entries = []string{""}
-					}
-					s.entries = entries
-				} else {
-					s.value = strings.Join(s.cleanEntries(), ";")
-				}
+				s.syncValueMode()
 			}
 		})
 		ui.Box(c).Height(space6)
@@ -267,7 +219,7 @@ func (a *App) sheetContent(c *ui.Context, s *sheetState) {
 		if s.create {
 			label = "创建变量"
 		}
-		a.button(c, label, nil, buttonPrimary, true, func() { a.saveSheet(c) })
+		a.button(c, label, nil, buttonPrimary, s.create || a.sheetDirty(), func() { a.saveSheet(c) })
 	})
 }
 
@@ -418,12 +370,8 @@ func (a *App) saveSheet(c *ui.Context) {
 		}
 	}
 	s.nameError = ""
-	if s.valueMode == 1 {
-		s.entries = s.cleanEntries()
-		if len(s.entries) == 0 {
-			s.entries = []string{""}
-		}
-		s.value = strings.Join(s.entries, ";")
+	if !s.create && !a.sheetDirty() {
+		return
 	}
 	value := s.currentValue()
 	scope := s.scope

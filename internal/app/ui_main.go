@@ -153,7 +153,7 @@ func (a *App) readonlyBanner(c *ui.Context) {
 	ui.Row(c).Margin(0, space24, space8, space24).Height(a.metrics.barH).Padding(0, space8).Radius(radiusOverlay).
 		Background(p.warnSoft).Border(1, p.warnSoft).AlignItems(ui.Center).Gap(space6).Children(func() {
 		ui.Icon(c, iconShield).Size(14, 14).TextColor(p.warn)
-		ui.Text(c, "系统变量为只读。以管理员身份重新启动后可修改。").FontSize(a.metrics.fontSmall).TextColor(p.warn).Grow(1).SingleLine()
+		ui.Text(c, "可编辑系统变量，保存时会请求管理员权限。").FontSize(a.metrics.fontSmall).TextColor(p.warn).Grow(1).SingleLine()
 		a.textButton(c, "立即提权", true, func() {
 			a.requestAdmin()
 		})

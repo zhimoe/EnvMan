@@ -29,6 +29,11 @@ func Run(dataDir string) error {
 			TitleBarHeight: 42,
 			Content:        ui.View(a.view),
 		})
+		a.win.OnClose(func(e *mygo.CloseEvent) {
+			if !a.allowClose(a.win.Close) {
+				e.PreventDefault()
+			}
+		})
 		switch a.themeMode {
 		case ThemeLight:
 			a.win.SetWindowButtonsTheme(mygo.ThemeLight)
@@ -61,7 +66,11 @@ func configureCapture(a *App) {
 		if err == nil {
 			_ = os.WriteFile(path, png, 0o644)
 		}
-		mygo.App.Quit()
+		a.win.Update(func() {
+			a.sheet = nil
+			a.batch = nil
+			mygo.App.Quit()
+		})
 	}()
 }
 

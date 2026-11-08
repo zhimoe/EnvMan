@@ -55,27 +55,6 @@ type App struct {
 	toastAction  *toastRequest
 }
 
-type sheetState struct {
-	create        bool
-	scope         Scope
-	originalName  string
-	originalValue string
-	name          string
-	value         string
-	valueMode     int // 0 text, 1 list
-	entries       []string
-	nameError     string
-	returnFocus   ui.Handle
-}
-
-type batchState struct {
-	scope         Scope
-	target        string
-	originalValue string
-	text          string
-	returnFocus   ui.Handle
-}
-
 type toastRequest struct {
 	message string
 	label   string

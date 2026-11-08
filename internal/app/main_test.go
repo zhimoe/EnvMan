@@ -509,7 +509,7 @@ func TestScopeAndView(t *testing.T) {
 	}
 	a.admin = false
 	tt.Frame()
-	if !tt.HasText("系统变量为只读") {
+	if !tt.HasText("保存时会请求管理员权限") {
 		t.Fatalf("readonly banner missing: %q", tt.Texts())
 	}
 	a.admin = true

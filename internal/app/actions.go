@@ -70,6 +70,8 @@ func (a *App) commit(scope Scope, desired []Variable, note, success, focus strin
 					a.toast("未获得管理员权限：" + err.Error())
 					return
 				}
+				a.sheet = nil
+				a.batch = nil
 				mygo.App.Quit()
 			},
 		}
