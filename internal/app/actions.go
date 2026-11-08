@@ -1,9 +1,11 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
+	"envman/internal/environment"
 	"envman/internal/storage"
 
 	"github.com/egoist/mygo"
@@ -84,7 +86,7 @@ func (a *App) commit(scope Scope, desired []Variable, note, success, focus strin
 		toWrite = mergeVariableChanges(snapshot.Variables, before, desired)
 	}
 	if err := a.env.ApplyChanges(scope, snapshot.Variables, toWrite); err != nil {
-		a.toast("保存失败：" + err.Error())
+		a.handleApplyFailure(scope, snapshot, err)
 		return false
 	}
 	a.scope = scope
@@ -207,4 +209,22 @@ func (a *App) applyBatchValue(scope Scope, target, value string) bool {
 		a.sheet = nil
 	}
 	return applied
+}
+
+// handleApplyFailure refreshes potentially changed data and retains the backup
+// recovery entry point even when the backend could not finish the operation.
+func (a *App) handleApplyFailure(scope Scope, snapshot Snapshot, err error) {
+	a.reload()
+	if partial, ok := errors.AsType[*environment.ApplyError](err); ok && partial.Partial() {
+		message := fmt.Sprintf("部分成功：已写入 %d 项、删除 %d 项；%v。可从备份恢复。", len(partial.Upserts), len(partial.Deletions), err)
+		if loadErr := a.loadErrors[scope]; loadErr != "" {
+			message += " 刷新失败，当前显示可能已过期：" + loadErr
+		}
+		a.toastAction = &toastRequest{message: message, label: "恢复备份", action: func() { a.confirmRestore(nil, snapshot) }}
+		if a.win != nil {
+			a.win.Invalidate()
+		}
+		return
+	}
+	a.toast("保存失败：" + err.Error())
 }

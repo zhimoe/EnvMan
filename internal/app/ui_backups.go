@@ -31,7 +31,9 @@ func (a *App) backupsView(c *ui.Context) {
 					a.iconButton(c, iconX, "关闭", a.metrics.controlXs, func() { a.backupsOpen = false })
 				})
 				ui.Box(c).Height(space12)
-				if len(a.snapshots) == 0 {
+				if a.snapshotsError != "" {
+					ui.Text(c, a.snapshotsError).TextColor(p.danger)
+				} else if len(a.snapshots) == 0 {
 					ui.Column(c).FillWidth().Padding(space32).Center().Gap(space8).Children(func() {
 						ui.Icon(c, iconClock).Size(22, 22).TextColor(p.text3)
 						ui.Text(c, "还没有备份").FontSize(a.metrics.fontBody).FontWeight(weightSemibold).TextColor(p.text2)

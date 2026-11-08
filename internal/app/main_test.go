@@ -426,7 +426,10 @@ func TestSnapshotRetentionAndPendingRoundTrip(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	snapshots := store.LoadSnapshots()
+	snapshots, err := store.LoadSnapshots()
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(snapshots) != storage.MaxSnapshots {
 		t.Fatalf("snapshot count = %d, want %d", len(snapshots), storage.MaxSnapshots)
 	}

@@ -3,7 +3,7 @@
 package environment
 
 import (
-	"fmt"
+	"errors"
 	"os"
 	"unsafe"
 
@@ -78,24 +78,19 @@ func (backend registryBackend) ApplyChanges(scope domain.Scope, before, desired 
 	}
 	defer key.Close()
 
-	// Apply writes before deletions so a partial failure leaves the snapshot
-	// available and avoids deleting requested values prematurely.
-	for _, variable := range upserts {
-		if err := setOne(key, variable.Name, variable.Value, domain.ValueType(variable.Type, variable.Value)); err != nil {
-			return backend.writeError(scope, fmt.Errorf("写入 %s：%w", variable.Name, err))
+	return applyDiff(upserts, deletions, func(v domain.Variable) error {
+		return backend.writeError(scope, setOne(key, v.Name, v.Value, domain.ValueType(v.Type, v.Value)))
+	}, func(name string) error {
+		err := key.DeleteValue(name)
+		if errors.Is(err, registry.ErrNotExist) {
+			return nil
 		}
-	}
-	for _, name := range deletions {
-		if err := key.DeleteValue(name); err != nil && err != registry.ErrNotExist {
-			return backend.writeError(scope, fmt.Errorf("删除 %s：%w", name, err))
-		}
-	}
-	broadcastEnvChange()
-	return nil
+		return backend.writeError(scope, err)
+	}, broadcastEnvChange)
 }
 
 func (backend registryBackend) writeError(scope domain.Scope, err error) error {
-	if scope == domain.ScopeSystem && !backend.Elevated() {
+	if err != nil && scope == domain.ScopeSystem && !backend.Elevated() {
 		return ErrNeedElevation
 	}
 	return err

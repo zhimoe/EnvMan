@@ -42,11 +42,12 @@ type App struct {
 
 	search ui.Handle
 
-	sheet       *sheetState
-	batch       *batchState
-	modal       *modalState
-	backupsOpen bool
-	snapshots   []Snapshot
+	sheet          *sheetState
+	batch          *batchState
+	modal          *modalState
+	backupsOpen    bool
+	snapshots      []Snapshot
+	snapshotsError string
 
 	startupToast string
 	pendingToast string
@@ -118,9 +119,10 @@ func newAppWith(backend environment.Backend, store *storage.Store) *App {
 	var applied *PendingEdits
 	if p := a.store.ReadPending(); p != nil {
 		if a.env.Elevated() {
-			current, err := a.env.Load(p.Scope)
+			snapshot, err := a.takeSnapshot(p.Scope, "提权后应用更改前备份")
+			current := snapshot.Variables
 			if err != nil {
-				a.startupToast = "提权后读取环境变量失败：" + err.Error()
+				a.startupToast = "提权后准备备份失败，未应用更改：" + err.Error()
 				a.pendingErr = true
 			} else {
 				desired := p.Variables
@@ -128,8 +130,7 @@ func newAppWith(backend environment.Backend, store *storage.Store) *App {
 					desired = mergeVariableChanges(current, p.Before, p.Variables)
 				}
 				if err := a.env.ApplyChanges(p.Scope, current, desired); err != nil {
-					a.startupToast = "提权后应用更改失败：" + err.Error()
-					a.pendingErr = true
+					a.handleApplyFailure(p.Scope, snapshot, err)
 				} else {
 					a.store.ClearPending()
 					applied = p
@@ -138,7 +139,6 @@ func newAppWith(backend environment.Backend, store *storage.Store) *App {
 		}
 	}
 	a.reload()
-	a.snapshots = a.store.LoadSnapshots()
 	a.expand(ScopeUser, "Path")
 	if applied != nil {
 		a.scope = applied.Scope
@@ -171,7 +171,13 @@ func (a *App) reload() {
 		a.vars[s] = vars
 		delete(a.loadErrors, s)
 	}
-	a.snapshots = a.store.LoadSnapshots()
+	snapshots, err := a.store.LoadSnapshots()
+	if err != nil {
+		a.snapshotsError = err.Error()
+	} else {
+		a.snapshots = snapshots
+		a.snapshotsError = ""
+	}
 }
 
 func (a *App) view(c *ui.Context) {

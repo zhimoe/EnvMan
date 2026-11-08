@@ -2,6 +2,8 @@ package storage
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -69,12 +71,15 @@ func writeJSON(path string, value any) error {
 	return os.Rename(temporary, path)
 }
 
-func (s *Store) LoadSnapshots() []Snapshot {
+func (s *Store) LoadSnapshots() ([]Snapshot, error) {
 	var snapshots []Snapshot
 	if err := readJSON(s.snapshotsPath(), &snapshots); err != nil {
-		return nil
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("读取备份历史失败：%w", err)
 	}
-	return snapshots
+	return snapshots, nil
 }
 
 func (s *Store) SaveSnapshot(scope domain.Scope, note string, variables []domain.Variable) (Snapshot, error) {
@@ -86,7 +91,11 @@ func (s *Store) SaveSnapshot(scope domain.Scope, note string, variables []domain
 		Note:      note,
 		Variables: domain.Clone(variables),
 	}
-	snapshots := append([]Snapshot{snapshot}, s.LoadSnapshots()...)
+	snapshots, err := s.LoadSnapshots()
+	if err != nil {
+		return snapshot, err
+	}
+	snapshots = append([]Snapshot{snapshot}, snapshots...)
 	if len(snapshots) > MaxSnapshots {
 		snapshots = snapshots[:MaxSnapshots]
 	}

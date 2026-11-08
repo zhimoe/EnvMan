@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -95,15 +96,8 @@ func analyzeBatch(originalValue, text string) batchInfo {
 		}
 	}
 	info.reordered = strings.Join(commonOld, "\x00") != strings.Join(commonNew, "\x00")
-	oldNorm := make([]string, len(original))
-	for i, o := range original {
-		oldNorm[i] = normalizeEntry(o)
-	}
-	newNorm := make([]string, len(entries))
-	for i, n := range entries {
-		newNorm[i] = normalizeEntry(n)
-	}
-	info.hasChanges = strings.Join(oldNorm, "\x00") != strings.Join(newNorm, "\x00")
+	// Saving compares exact values; path duplicate detection remains semantic.
+	info.hasChanges = !slices.Equal(original, entries)
 	seen := make(map[string]bool)
 	for _, n := range entries {
 		k := normalizeEntry(n)

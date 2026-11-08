@@ -14,6 +14,8 @@ var ErrNeedElevation = errors.New("需要管理员权限")
 // development and tests.
 type Backend interface {
 	Load(domain.Scope) ([]domain.Variable, error)
+	// ApplyChanges returns an *ApplyError when an operation fails after the
+	// write sequence starts, including which operations completed.
 	ApplyChanges(scope domain.Scope, before, desired []domain.Variable) error
 	Elevated() bool
 	RelaunchElevated(params string) error
