@@ -36,7 +36,7 @@ go tool mygo vet .
 ./scripts/build-windows-portable.sh
 ```
 
-免安装构建产物位于 `build/portable/windows-amd64/`。发布时保留该目录中的
+免安装构建产物位于 `build/windows-amd64/`。发布时保留该目录中的
 `EnvMan.exe` 和资源文件。
 
 如需同时生成安装器，可直接运行：

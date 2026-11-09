@@ -13,4 +13,4 @@ go tool mygo build \
   -o build .
 
 printf '\nPortable output: %s\n' \
-  "$project_dir/build/portable/windows-amd64"
+  "$project_dir/build/windows-amd64"
