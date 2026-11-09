@@ -2,7 +2,7 @@ package app
 
 import "math"
 
-const monoFont = "Consolas, SF Mono, monospace"
+const monoFont = "SF Mono, Consolas, monospace"
 
 // The type scale: five steps cover every text the app shows, in DIPs at the
 // system's text scale of 1.
