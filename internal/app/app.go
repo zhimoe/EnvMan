@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"envman/internal/application"
 	"envman/internal/environment"
 	"envman/internal/storage"
 
@@ -13,9 +14,10 @@ import (
 )
 
 type App struct {
-	win   *mygo.Window
-	env   environment.Backend
-	store *storage.Store
+	win     *mygo.Window
+	env     environment.Backend
+	store   *storage.Store
+	service *application.Service
 
 	scope    Scope
 	filter   ViewFilter
@@ -84,6 +86,7 @@ func newAppWith(backend environment.Backend, store *storage.Store) *App {
 		focusUser:   -1,
 		focusSystem: -1,
 	}
+	a.service = application.New(backend, store)
 	settings := a.loadSettings()
 	a.themeMode = parseThemeMode(settings.Theme)
 	if t := os.Getenv("ENVMAN_THEME"); t != "" {
@@ -97,27 +100,34 @@ func newAppWith(backend environment.Backend, store *storage.Store) *App {
 	}
 
 	var applied *PendingEdits
-	if p := a.store.ReadPending(); p != nil {
-		if a.env.Elevated() {
-			snapshot, err := a.takeSnapshot(p.Scope, "提权后应用更改前备份")
-			current := snapshot.Variables
+
+	p, pendingErr := a.store.ReadPending()
+	if pendingErr != nil {
+		a.startupToast = "读取待应用更改失败：" + pendingErr.Error()
+		a.pendingErr = true
+	} else if p != nil && a.env.Elevated() {
+		// Consume the command before writing, so failures cannot silently replay on restart.
+		if claimed, err := a.store.ClaimPending(); err != nil {
+			a.startupToast = "无法领取待应用更改，未写入：" + err.Error()
+			a.pendingErr = true
+		} else {
+			result, err := a.service.Apply(application.Change{Scope: p.Scope, Before: p.Before, Desired: p.Variables, Note: "提权后应用更改前备份"})
 			if err != nil {
-				a.startupToast = "提权后准备备份失败，未应用更改：" + err.Error()
-				a.pendingErr = true
-			} else {
-				desired := p.Variables
-				if p.Before != nil {
-					desired = mergeVariableChanges(current, p.Before, p.Variables)
-				}
-				if err := a.env.ApplyChanges(p.Scope, current, desired); err != nil {
-					a.handleApplyFailure(p.Scope, snapshot, err)
+				if result.Snapshot.ID != "" {
+					a.handleApplyFailure(p.Scope, result.Snapshot, err)
 				} else {
-					a.store.ClearPending()
-					applied = p
+					a.startupToast = err.Error()
+					a.pendingErr = true
 				}
+			} else {
+				if err := a.store.CompletePending(claimed); err != nil {
+					a.toast("更改已应用，但无法清理恢复文件：" + err.Error())
+				}
+				applied = p
 			}
 		}
 	}
+
 	a.reload()
 	a.expand(ScopeUser, "Path")
 	if applied != nil {

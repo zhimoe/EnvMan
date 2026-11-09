@@ -119,3 +119,28 @@ func ValueType(typ, value string) string {
 	}
 	return "REG_SZ"
 }
+
+// Validate enforces invariants at every write entry point, including persisted edits.
+func Validate(scope Scope, variables []Variable) error {
+	if scope != ScopeUser && scope != ScopeSystem {
+		return fmt.Errorf("无效的变量范围：%d", scope)
+	}
+	seen := make(map[string]bool, len(variables))
+	for _, v := range variables {
+		if strings.TrimSpace(v.Name) == "" || strings.ContainsAny(v.Name, "=\x00") {
+			return fmt.Errorf("无效的变量名：%q", v.Name)
+		}
+		if strings.ContainsRune(v.Value, 0) {
+			return fmt.Errorf("变量 %s 的值包含空字符", v.Name)
+		}
+		if v.Type != "" && v.Type != "REG_SZ" && v.Type != "REG_EXPAND_SZ" {
+			return fmt.Errorf("变量 %s 的类型无效：%s", v.Name, v.Type)
+		}
+		key := strings.ToLower(v.Name)
+		if seen[key] {
+			return fmt.Errorf("变量名重复：%s", v.Name)
+		}
+		seen[key] = true
+	}
+	return nil
+}

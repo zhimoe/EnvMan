@@ -82,8 +82,10 @@ go mod vendor
 
 ## 界面尺寸约定
 
-界面尺寸集中在两个文件：`internal/app/metrics.go`（字号、间距、控件高度）和
-`internal/app/theme.go`（圆角、配色）。改一处即可全局生效，不要在新代码里写字面量。
+界面样式按职责集中管理：`internal/app/metrics.go` 管理字号、间距和控件高度，
+`geometry.go` 管理圆角，`palette.go` 管理深浅色及高对比度配色，
+`theme.go` 组装框架主题，`theme_settings.go` 管理主题偏好与持久化。
+新组件应复用语义 token，不要散落字号和颜色字面量。
 
 **圆角**：沿用 Windows Fluent 的两档语义——控件 4、浮层 8，胶囊为全圆。
 图标方块按尺寸取 4（<32）或 8（≥32）。
@@ -133,8 +135,25 @@ UAC。注册表中的非字符串值不会被 EnvMan 删除。
 - `cmd/envman/`：程序入口；`mygo.json` 的 `main` 字段指向此包。
 - `internal/app/`：MyGo 原生界面（`metrics.go` 尺寸、`theme.go` 配色与圆角）、
   应用状态和提交/撤销等流程编排。
-- `internal/domain/`：环境变量领域类型、差异计算和并发变更合并。
+- `internal/application/`：环境写入用例、环境与备份端口，以及快照/待应用命令契约；不依赖 UI 或基础设施。
+- `internal/domain/`：环境变量领域类型、写入不变量校验、差异计算和并发变更合并。
 - `internal/environment/`：Windows 注册表后端与非 Windows 内存后端。
 - `internal/storage/`：快照、待提权变更和设置的 JSON 持久化。
 - 各包内的 `*_test.go`：领域、平台、存储与 native UI 交互测试。
 - `vendor/`：应用与 MyGo 构建工具的完整依赖源码。
+
+### 分层与写入边界
+
+依赖方向为 UI → application → domain，storage/environment 作为基础设施实现应用端口。
+应用服务统一执行校验、备份、合并和写入；UI 只编排用户交互、展示结果和撤销入口。
+当前仍由 app.Run 组装依赖，设置和备份列表查询保留在界面适配层，后续可按实际需要提取查询端口。
+
+提权启动先将 pending.json 重命名为 pending-*.interrupted.json，再执行写入，
+成功后删除恢复文件。失败或中断时保留该文件，但不会在下次启动自动重放；
+可通过已有备份恢复界面恢复环境，恢复文件供人工排查。该机制不提供多进程事务保证。
+并发合并保留无关变量变更，同一变量冲突仍采用本次提交覆盖策略。
+
+文本缩放与 DPI 缩放分开处理：metrics 只应用系统 TextScale，DPI 交给 UI 框架，
+避免重复缩放。测试覆盖 100%、125%、150%、200%、225% 文本缩放下的主题与基础渲染，
+以及关键文本色对的 4.5:1 对比度；并不代表所有布局或 Windows 多显示器 DPI 已实机验收。
+高对比度使用一致的黑白回退调色板，当前框架未提供用户自定义的 Windows 对比主题颜色。

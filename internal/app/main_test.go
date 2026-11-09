@@ -447,12 +447,15 @@ func TestSnapshotRetentionAndPendingRoundTrip(t *testing.T) {
 	if err := store.WritePending(pending); err != nil {
 		t.Fatal(err)
 	}
-	got := store.ReadPending()
+	got, err := store.ReadPending()
+	if err != nil {
+		t.Fatal(err)
+	}
 	if got == nil || got.Note != pending.Note || len(got.Variables) != 1 {
 		t.Fatalf("pending round trip = %+v", got)
 	}
 	store.ClearPending()
-	if got := store.ReadPending(); got != nil {
+	if got, err := store.ReadPending(); err != nil || got != nil {
 		t.Fatalf("pending file survived clear: %+v", got)
 	}
 }
@@ -495,7 +498,7 @@ func TestElevatedStartupAppliesPendingDiff(t *testing.T) {
 	if _, ok := a.findVariable(ScopeSystem, "ADDED_ELSEWHERE"); !ok {
 		t.Fatal("pending apply removed unrelated variable")
 	}
-	if store.ReadPending() != nil {
+	if pending, err := store.ReadPending(); err != nil || pending != nil {
 		t.Fatal("successfully applied pending edit was not cleared")
 	}
 }

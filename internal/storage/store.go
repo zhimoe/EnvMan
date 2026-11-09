@@ -8,26 +8,14 @@ import (
 	"path/filepath"
 	"time"
 
+	"envman/internal/application"
 	"envman/internal/domain"
 )
 
 const MaxSnapshots = 20
 
-type Snapshot struct {
-	ID        string            `json:"id"`
-	Time      time.Time         `json:"time"`
-	Scope     domain.Scope      `json:"scope"`
-	Note      string            `json:"note"`
-	Variables []domain.Variable `json:"variables"`
-}
-
-type PendingEdits struct {
-	Scope     domain.Scope      `json:"scope"`
-	Note      string            `json:"note"`
-	Focus     string            `json:"focus,omitempty"`
-	Before    []domain.Variable `json:"before,omitempty"`
-	Variables []domain.Variable `json:"variables"`
-}
+type Snapshot = application.Snapshot
+type PendingEdits = application.PendingEdits
 
 type Store struct {
 	dir string
@@ -105,20 +93,27 @@ func (s *Store) SaveSnapshot(scope domain.Scope, note string, variables []domain
 	return snapshot, nil
 }
 
-func (s *Store) ReadPending() *PendingEdits {
+func (s *Store) ReadPending() (*PendingEdits, error) {
 	var pending PendingEdits
 	if err := readJSON(s.pendingPath(), &pending); err != nil {
-		return nil
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, nil
+		}
+		return nil, err
 	}
-	return &pending
+	return &pending, nil
 }
 
 func (s *Store) WritePending(pending PendingEdits) error {
 	return writeJSON(s.pendingPath(), pending)
 }
 
-func (s *Store) ClearPending() {
-	_ = os.Remove(s.pendingPath())
+func (s *Store) ClearPending() error {
+	err := os.Remove(s.pendingPath())
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	return err
 }
 
 func (s *Store) LoadSettings(settings any) error {
@@ -127,4 +122,21 @@ func (s *Store) LoadSettings(settings any) error {
 
 func (s *Store) SaveSettings(settings any) error {
 	return writeJSON(s.settingsPath(), settings)
+}
+
+// ClaimPending keeps the original command for recovery but removes it from
+// automatic startup processing. The returned name identifies the retained file.
+func (s *Store) ClaimPending() (string, error) {
+	name := "pending-" + time.Now().Format("20060102-150405.000000000") + ".interrupted.json"
+	if err := os.Rename(s.pendingPath(), filepath.Join(s.dir, name)); err != nil {
+		return "", err
+	}
+	return name, nil
+}
+
+func (s *Store) CompletePending(name string) error {
+	if filepath.Base(name) != name || name == "." {
+		return fmt.Errorf("无效的待应用文件名")
+	}
+	return os.Remove(filepath.Join(s.dir, name))
 }

@@ -1,8 +1,8 @@
 package app
 
 import (
+	"envman/internal/application"
 	"envman/internal/domain"
-	"envman/internal/storage"
 )
 
 type Scope = domain.Scope
@@ -13,8 +13,8 @@ const (
 )
 
 type Variable = domain.Variable
-type Snapshot = storage.Snapshot
-type PendingEdits = storage.PendingEdits
+type Snapshot = application.Snapshot
+type PendingEdits = application.PendingEdits
 
 func cloneVars(vars []Variable) []Variable {
 	return domain.Clone(vars)

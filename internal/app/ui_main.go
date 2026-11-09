@@ -547,16 +547,22 @@ func (a *App) valueCell(c *ui.Context, v Variable, index int) {
 		ui.Text(c, "（空值）").FontSize(a.metrics.fontSmall).TextColor(p.text3)
 		return
 	}
+	entries := splitValue(value)
 	if !isMultiValue(value) {
-		if a.missingPaths[v.Key(a.scope)] {
-			a.richValueWithRefs(c, value, a.query, 12, p.danger, 2, false).Grow(1).MinWidth(0)
+		if a.missingEntry(a.scope, v.Name, entries[0]) {
+			a.richValueWithRefs(c, value, a.query, a.metrics.fontBody, p.danger, 2, false).Grow(1).MinWidth(0)
 			return
 		}
-		a.richValue(c, value, a.query, 12, p.text2, 2).Grow(1).MinWidth(0)
+		a.richValue(c, value, a.query, a.metrics.fontBody, p.text2, 2).Grow(1).MinWidth(0)
 		return
 	}
-	entries := splitValue(value)
 	expanded := a.isExpanded(a.scope, v.Name)
+	missingCount := 0
+	for _, entry := range entries {
+		if a.missingEntry(a.scope, v.Name, entry) {
+			missingCount++
+		}
+	}
 	toggle := ui.ButtonBase(c).Grow(1).Padding(0).Gap(space6).Cursor(ui.CursorPointer)
 	toggle.Label(v.Name + " 条目")
 	toggle.Children(func() {
@@ -574,10 +580,18 @@ func (a *App) valueCell(c *ui.Context, v Variable, index int) {
 		if expanded {
 			ui.Text(c, "收起条目列表").FontSize(a.metrics.fontBody).TextColor(p.text3).SingleLine().Grow(1)
 		} else {
-			a.richValue(c, strings.Join(entries, ";"), a.query, 12, p.text2, 1).Grow(1).MinWidth(0)
+			a.richEntries(c, entries, func(entry string) bool {
+				return a.missingEntry(a.scope, v.Name, entry)
+			}, a.query, a.metrics.fontBody, p.text2, 1).Grow(1).MinWidth(0)
 		}
-		ui.Row(c).Padding(1.5, space4).Radius(radiusPill).Background(p.surface2).Border(1, p.line).Children(func() {
-			ui.Textf(c, "%d 项", len(entries)).FontSize(a.metrics.fontCaption).FontWeight(weightSemibold).TextColor(p.text3)
+		pillBg, pillBorder, pillFg := p.surface2, p.line, p.text3
+		pillText := fmt.Sprintf("%d 项", len(entries))
+		if missingCount > 0 {
+			pillBg, pillBorder, pillFg = p.dangerSoft, p.dangerSoft, p.danger
+			pillText = fmt.Sprintf("%d 项 · %d 缺失", len(entries), missingCount)
+		}
+		ui.Row(c).Padding(1.5, space4).Radius(radiusPill).Background(pillBg).Border(1, pillBorder).Children(func() {
+			ui.Text(c, pillText).FontSize(a.metrics.fontCaption).FontWeight(weightSemibold).TextColor(pillFg)
 		})
 	})
 	if toggle.Clicked() {
@@ -595,17 +609,36 @@ func chooseColor(cond bool, yes, no ui.Color) ui.Color {
 func (a *App) entriesPanel(c *ui.Context, v Variable) {
 	p := a.pal
 	entries := splitValue(v.Value)
+	missingCount := 0
+	for _, entry := range entries {
+		if a.missingEntry(a.scope, v.Name, entry) {
+			missingCount++
+		}
+	}
 	ui.Column(c).FillWidth().Radius(radiusControl).Background(p.surface2).Border(1, p.line).Padding(space4).Children(func() {
 		ui.Row(c).Padding(0, space6, space2, space6).AlignItems(ui.Center).Children(func() {
 			ui.Textf(c, "%d 个条目 · 以 ; 分隔", len(entries)).FontSize(a.metrics.fontCaption).TextColor(p.text3).Grow(1)
+			if missingCount > 0 {
+				ui.Textf(c, "%d 个路径不存在", missingCount).FontSize(a.metrics.fontCaption).FontWeight(weightSemibold).TextColor(p.danger)
+			}
 			a.textButton(c, "整段编辑", true, func() {
 				a.openBatch(v.Name)
 			})
 		})
 		for i, entry := range entries {
+			missing := a.missingEntry(a.scope, v.Name, entry)
 			ui.Row(c).Padding(1, space4).AlignItems(ui.Start).Gap(space2).Children(func() {
 				ui.Textf(c, "%02d", i+1).Font(monoFont).FontSize(a.metrics.fontCaption).TextColor(p.text3).Width(24).TextAlign(ui.End)
-				a.richValue(c, entry, a.query, 11.5, p.text2, 0).Grow(1).MinWidth(0)
+				valueColor := p.text2
+				if missing {
+					valueColor = p.danger
+				}
+				a.richValueWithRefs(c, entry, a.query, a.metrics.fontSmall, valueColor, 0, !missing).Grow(1).MinWidth(0)
+				if missing {
+					ui.Row(c).Padding(1.5, space4).Radius(radiusPill).Background(p.dangerSoft).Children(func() {
+						ui.Text(c, "路径不存在").FontSize(a.metrics.fontCaption).FontWeight(weightSemibold).TextColor(p.danger)
+					})
+				}
 				a.iconButtonColor(c, iconCopy, "复制此条目", 18, p.text3, func() {
 					c.WriteClipboard(entry)
 					a.toast("已复制条目")

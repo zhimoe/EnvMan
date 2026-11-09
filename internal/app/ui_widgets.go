@@ -71,7 +71,7 @@ func (a *App) button(c *ui.Context, label string, s *ui.SVG, kind buttonKind, en
 		border = p.surface3
 		hover = p.line
 	} else if kind == buttonDanger {
-		fg = ui.Hex("#ffffff")
+		fg = p.dangerText
 		bg = p.danger
 		border = p.danger
 		hover = p.danger
@@ -229,6 +229,30 @@ func (a *App) richValueWithRefs(c *ui.Context, value, query string, size float32
 	return e
 }
 
+// richEntries renders semicolon-separated value entries, painting the entries
+// missing reports as gone in the danger color. Remaining entries keep the
+// query and %VAR% highlighting.
+func (a *App) richEntries(c *ui.Context, entries []string, missing func(string) bool, query string, size float32, color ui.Color, lines int) ui.Element {
+	var spans []ui.Span
+	for i, entry := range entries {
+		if i > 0 {
+			spans = append(spans, ui.Span{Text: ";", Color: color})
+		}
+		if missing(entry) {
+			spans = append(spans, a.spansForText(entry, query, a.pal.danger, false)...)
+			continue
+		}
+		spans = append(spans, a.spansForText(entry, query, color, true)...)
+	}
+	e := ui.RichText(c, spans...).Font(monoFont).FontSize(size).TextColor(color)
+	if lines == 1 {
+		e.SingleLine()
+	} else if lines > 1 {
+		e.MaxLines(lines)
+	}
+	return e
+}
+
 func (a *App) richName(c *ui.Context, name, query string) ui.Element {
 	spans := a.spansForText(name, query, a.pal.text, false)
 	return ui.RichText(c, spans...).Font(monoFont).FontSize(a.metrics.fontBody).FontWeight(weightSemibold).TextColor(a.pal.text).SingleLine()
@@ -278,7 +302,7 @@ func cmdKeyLabel() string {
 func (a *App) checkBox(c *ui.Context, checked, mixed bool, label string, onToggle func()) {
 	p := a.pal
 	box := ui.ButtonBase(c).Size(15, 15).Radius(radiusControl).Cursor(ui.CursorPointer).
-		Border(1.4, p.line).Background(p.surface).Role(ui.RoleCheckBox).Label(label).FocusRing(false)
+		Border(1.4, p.line).Background(p.surface).Role(ui.RoleCheckBox).Label(label)
 	box.Checked(checked)
 	if mixed {
 		box.Mixed()

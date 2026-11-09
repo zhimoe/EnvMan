@@ -7,16 +7,21 @@ import (
 	"strings"
 )
 
-// scanMissingPaths records the single-valued absolute paths that do not
-// exist. It runs once per reload on the main thread, so the table can paint
-// missing values without touching the file system while rendering.
+// scanMissingPaths records the absolute path entries that do not exist. It
+// runs once per reload on the main thread, so the table can paint missing
+// entries without touching the file system while rendering. Every entry is
+// checked, so a list like Path flags only the entries that are gone.
 func (a *App) scanMissingPaths(stat func(string) error) {
 	missing := make(map[string]bool)
 	for _, scope := range []Scope{ScopeUser, ScopeSystem} {
 		for _, v := range a.variables(scope) {
-			if path, ok := a.checkablePath(v); ok {
+			for _, entry := range splitValue(v.Value) {
+				path, ok := a.checkablePath(v, entry)
+				if !ok {
+					continue
+				}
 				if errors.Is(stat(path), fs.ErrNotExist) {
-					missing[v.Key(scope)] = true
+					missing[missingEntryKey(scope, v.Name, entry)] = true
 				}
 			}
 		}
@@ -24,15 +29,24 @@ func (a *App) scanMissingPaths(stat func(string) error) {
 	a.missingPaths = missing
 }
 
-// checkablePath returns the expanded path of a variable whose whole value is
-// one absolute Windows path. Lists, relative paths, command lines, and values
-// whose references cannot be resolved are left alone.
-func (a *App) checkablePath(v Variable) (string, bool) {
-	entries := splitValue(v.Value)
-	if len(entries) != 1 || entries[0] == "" {
+// missingEntryKey identifies one entry of a variable's value; the same
+// variable can have some entries missing and others present.
+func missingEntryKey(scope Scope, name, entry string) string {
+	return varKey(scope, name) + "\x00" + entry
+}
+
+func (a *App) missingEntry(scope Scope, name, entry string) bool {
+	return a.missingPaths[missingEntryKey(scope, name, entry)]
+}
+
+// checkablePath returns the expanded path of an entry that is one whole
+// absolute Windows path. Relative paths, command lines, and entries whose
+// references cannot be resolved are left alone.
+func (a *App) checkablePath(v Variable, entry string) (string, bool) {
+	if entry == "" {
 		return "", false
 	}
-	value := entries[0]
+	value := entry
 	if len(value) >= 2 && value[0] == '"' && value[len(value)-1] == '"' {
 		value = strings.TrimSpace(value[1 : len(value)-1])
 	} else if strings.Contains(value, `"`) {

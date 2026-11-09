@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"envman/internal/application"
+	"envman/internal/domain"
 	"envman/internal/environment"
-	"envman/internal/storage"
 
 	"github.com/egoist/mygo"
 )
@@ -42,8 +43,12 @@ func (a *App) variablesWithout(scope Scope, names []string) []Variable {
 // was applied in this process. A system change made without elevation asks for
 // a restart instead.
 func (a *App) commit(scope Scope, desired []Variable, note, success, focus string, before []Variable) bool {
+	if err := domain.Validate(scope, desired); err != nil {
+		a.toast(err.Error())
+		return false
+	}
 	if scope == ScopeSystem && !a.admin {
-		pending := storage.PendingEdits{
+		pending := application.PendingEdits{
 			Scope:     scope,
 			Note:      success,
 			Focus:     focus,
@@ -78,19 +83,17 @@ func (a *App) commit(scope Scope, desired []Variable, note, success, focus strin
 		return false
 	}
 
-	snapshot, err := a.takeSnapshot(scope, note)
+	result, err := a.service.Apply(application.Change{Scope: scope, Before: before, Desired: desired, Note: note})
 	if err != nil {
-		a.toast("创建备份失败，未应用更改：" + err.Error())
+		if result.Snapshot.ID != "" {
+			a.handleApplyFailure(scope, result.Snapshot, err)
+		} else {
+			a.toast(err.Error())
+		}
 		return false
 	}
-	toWrite := desired
-	if before != nil {
-		toWrite = mergeVariableChanges(snapshot.Variables, before, desired)
-	}
-	if err := a.env.ApplyChanges(scope, snapshot.Variables, toWrite); err != nil {
-		a.handleApplyFailure(scope, snapshot, err)
-		return false
-	}
+	snapshot, toWrite := result.Snapshot, result.Desired
+
 	a.scope = scope
 	a.reload()
 	if focus != "" {
@@ -141,7 +144,10 @@ func (a *App) requestAdmin() {
 		confirm: "以管理员身份重启",
 		cancel:  "取消",
 		onConfirm: func() {
-			a.store.ClearPending()
+			if err := a.store.ClearPending(); err != nil {
+				a.toast("无法清理待应用更改：" + err.Error())
+				return
+			}
 			if err := a.env.RelaunchElevated("--data-dir=\"" + a.store.Dir() + "\""); err != nil {
 				a.toast("未获得管理员权限：" + err.Error())
 				return

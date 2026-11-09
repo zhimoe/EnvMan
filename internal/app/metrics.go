@@ -2,6 +2,8 @@ package app
 
 import "math"
 
+const monoFont = "Consolas, SF Mono, monospace"
+
 // The type scale: five steps cover every text the app shows, in DIPs at the
 // system's text scale of 1.
 const (
@@ -35,11 +37,11 @@ const (
 
 // The line box of Windows' Segoe UI, as a multiple of the font size: its
 // ascent, descent and line gap.
-const lineFactor = 1.33
+const lineFactor = 4.0 / 3.0
 
 // metrics are the sizes the view lays out with, recomputed each frame from
 // the system's text scale: the font sizes scale, and the heights that hold
-// text follow their line boxes, so that larger text never clips.
+// text follow their line boxes, to reduce clipping as text grows. Font fallback and wrapping still require layout QA.
 type metrics struct {
 	fontCaption  float32
 	fontSmall    float32
@@ -66,7 +68,7 @@ type metrics struct {
 // newMetrics returns the sizes for a system text scale, which is 1 or more.
 func newMetrics(textScale float32) metrics {
 	scale := textScale
-	if scale < 1 {
+	if scale < 1 || math.IsNaN(float64(scale)) || math.IsInf(float64(scale), 0) {
 		scale = 1
 	}
 	// Font sizes land on half DIPs, as the system's text scale does.
@@ -81,7 +83,7 @@ func newMetrics(textScale float32) metrics {
 		fontTitle:    font(fontTitleBase),
 	}
 	line := func(size float32) float32 {
-		return float32(math.Round(float64(size) * lineFactor))
+		return float32(math.Ceil(float64(size) * lineFactor))
 	}
 	body := line(m.fontBody)
 	m.lineBody = body
