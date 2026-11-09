@@ -213,7 +213,13 @@ func (a *App) spansForText(text, query string, base ui.Color, withRefs bool) []u
 }
 
 func (a *App) richValue(c *ui.Context, value, query string, size float32, color ui.Color, lines int) ui.Element {
-	spans := a.spansForText(value, query, color, true)
+	return a.richValueWithRefs(c, value, query, size, color, lines, true)
+}
+
+// richValueWithRefs is richValue with the %VAR% accent highlighting optional.
+// Missing paths take one color for the whole value.
+func (a *App) richValueWithRefs(c *ui.Context, value, query string, size float32, color ui.Color, lines int, withRefs bool) ui.Element {
+	spans := a.spansForText(value, query, color, withRefs)
 	e := ui.RichText(c, spans...).Font(monoFont).FontSize(size).TextColor(color)
 	if lines == 1 {
 		e.SingleLine()

@@ -548,6 +548,10 @@ func (a *App) valueCell(c *ui.Context, v Variable, index int) {
 		return
 	}
 	if !isMultiValue(value) {
+		if a.missingPaths[v.Key(a.scope)] {
+			a.richValueWithRefs(c, value, a.query, 12, p.danger, 2, false).Grow(1).MinWidth(0)
+			return
+		}
 		a.richValue(c, value, a.query, 12, p.text2, 2).Grow(1).MinWidth(0)
 		return
 	}

@@ -22,9 +22,10 @@ type App struct {
 	query    string
 	sortDesc bool
 
-	vars       map[Scope][]Variable
-	loadErrors map[Scope]string
-	admin      bool
+	vars         map[Scope][]Variable
+	loadErrors   map[Scope]string
+	missingPaths map[string]bool
+	admin        bool
 
 	expanded map[string]bool
 	checked  map[string]bool
@@ -150,6 +151,7 @@ func (a *App) reload() {
 		a.vars[s] = vars
 		delete(a.loadErrors, s)
 	}
+	a.scanMissingPaths(statPath)
 	snapshots, err := a.store.LoadSnapshots()
 	if err != nil {
 		a.snapshotsError = err.Error()
