@@ -4,3 +4,4 @@ mygo_windows_*.syso
 *.test
 .DS_Store
 .idea/
+/vendor/

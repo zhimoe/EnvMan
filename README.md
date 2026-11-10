@@ -21,9 +21,12 @@ HTML、CSS 或 JavaScript。
 ## 开发
 
 需要 Go 1.27.3 或更高版本。MyGo CLI 已通过 `go.mod` 的 `tool` 指令固定为
-v0.8.3；所有 Go 依赖都提交在 `vendor/` 中。
+v0.8.3；Git 仅跟踪 `go.mod` / `go.sum`，`vendor/` 在本地生成，不提交到 GitHub。
 
 ```sh
+# 首次克隆或依赖更新后，生成本地离线依赖
+go mod vendor
+
 # 在当前平台运行；非 Windows 平台使用内置演示数据
 go run ./cmd/envman
 
@@ -82,6 +85,18 @@ go mod vendor
 
 列表序号、缩进与引用高亮的复检与修复见
 [列表对齐复检记录](doc/list-alignment/ui-list-alignment.md)。
+
+### 打包包含 vendor 的源码
+
+```sh
+./scripts/package-source.sh
+```
+
+输出 `build/source/EnvMan-source-<commit>.tar.gz`，包含当前 **HEAD 已提交源码**
+和按该提交 `go.mod` / `go.sum` 生成的完整 `vendor/`。脚本在临时目录中组装，
+不会打包 `.git`、构建产物或未提交文件，也不会修改工作区的 vendor。
+首次生成可能需要联网；依赖已缓存后可离线生成。
+GitHub 自动生成的 Source code 下载包不包含 vendor；需要离线源码时使用本脚本产物。
 
 ## 界面尺寸约定
 
@@ -143,7 +158,7 @@ UAC。注册表中的非字符串值不会被 EnvMan 删除。
 - `internal/environment/`：Windows 注册表后端与非 Windows 内存后端。
 - `internal/storage/`：快照、待提权变更和设置的 JSON 持久化。
 - 各包内的 `*_test.go`：领域、平台、存储与 native UI 交互测试。
-- `vendor/`：应用与 MyGo 构建工具的完整依赖源码。
+- `vendor/`：本地生成的应用与 MyGo 构建工具依赖源码，Git 忽略。
 
 ### 分层与写入边界
 
