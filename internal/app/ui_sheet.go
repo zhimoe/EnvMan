@@ -235,10 +235,9 @@ func (a *App) sheetValueList(c *ui.Context, s *sheetState) {
 	p := a.pal
 	ui.Column(c).FillWidth().Radius(radiusOverlay).Background(p.surface2).Border(1, p.line).Padding(space2).Children(func() {
 		for i := 0; i < len(s.entries); i++ {
-			i := i
-			row := ui.Row(c).Height(a.metrics.rowH).FillWidth().Radius(radiusControl).Padding(0, 1).Gap(space2).AlignItems(ui.Center)
+			row := ui.Row(c).Height(a.metrics.rowH).FillWidth().Radius(radiusControl).Padding(0, space4).Gap(space8).AlignItems(ui.Center)
 			row.Children(func() {
-				ui.Textf(c, "%02d", i+1).Font(monoFont).FontSize(a.metrics.fontCaption).TextColor(p.text3).Width(15).TextAlign(ui.End)
+				a.listNumber(c, i+1, len(s.entries))
 				ui.TextInput(c, &s.entries[i]).Height(a.metrics.controlSm).Font(monoFont).FontSize(a.metrics.fontBody).
 					Label(fmt.Sprintf("条目 %d", i+1)).Grow(1)
 				up := a.iconButtonBase(c, iconChevronDown, "上移", 18)

@@ -285,7 +285,7 @@ func (a *App) tableHeader(c *ui.Context, rows []Variable) {
 			})
 		})
 		ui.Row(c).Width(colName).Padding(0, space12, 0, 0).Children(func() {
-			sort := ui.ButtonBase(c).Height(a.metrics.controlXs).Padding(0, space2).Radius(radiusControl).Gap(space4).Cursor(ui.CursorPointer)
+			sort := ui.ButtonBase(c).Height(a.metrics.controlXs).Padding(0).Radius(radiusControl).Gap(space4).Cursor(ui.CursorPointer)
 			sort.Label("按变量名排序")
 			sort.Children(func() {
 				ui.Text(c, "变量名").FontSize(a.metrics.fontCaption).FontWeight(weightSemibold).LetterSpacing(0.5).TextColor(p.text3)
@@ -563,9 +563,16 @@ func (a *App) valueCell(c *ui.Context, v Variable, index int) {
 			missingCount++
 		}
 	}
-	toggle := ui.ButtonBase(c).Grow(1).Padding(0).Gap(space6).Cursor(ui.CursorPointer)
+	toggle := ui.ButtonBase(c).Grow(1).MinWidth(0).Padding(0).Gap(space8).Cursor(ui.CursorPointer)
 	toggle.Label(v.Name + " 条目")
 	toggle.Children(func() {
+		if expanded {
+			ui.Text(c, "收起条目列表").FontSize(a.metrics.fontBody).TextColor(p.text3).SingleLine().Grow(1)
+		} else {
+			a.richEntries(c, entries, func(entry string) bool {
+				return a.missingEntry(a.scope, v.Name, entry)
+			}, a.query, a.metrics.fontBody, p.text2, 1).Grow(1).MinWidth(0)
+		}
 		ui.Row(c).Size(17, 17).Radius(tileRadius(17)).Center().
 			Background(chooseColor(expanded, p.accentSoft, p.surface3)).Children(func() {
 			col := p.text3
@@ -577,13 +584,6 @@ func (a *App) valueCell(c *ui.Context, v Variable, index int) {
 				chev.Rotate(90)
 			}
 		})
-		if expanded {
-			ui.Text(c, "收起条目列表").FontSize(a.metrics.fontBody).TextColor(p.text3).SingleLine().Grow(1)
-		} else {
-			a.richEntries(c, entries, func(entry string) bool {
-				return a.missingEntry(a.scope, v.Name, entry)
-			}, a.query, a.metrics.fontBody, p.text2, 1).Grow(1).MinWidth(0)
-		}
 		pillBg, pillBorder, pillFg := p.surface2, p.line, p.text3
 		pillText := fmt.Sprintf("%d 项", len(entries))
 		if missingCount > 0 {
@@ -627,8 +627,8 @@ func (a *App) entriesPanel(c *ui.Context, v Variable) {
 		})
 		for i, entry := range entries {
 			missing := a.missingEntry(a.scope, v.Name, entry)
-			ui.Row(c).Padding(1, space4).AlignItems(ui.Start).Gap(space2).Children(func() {
-				ui.Textf(c, "%02d", i+1).Font(monoFont).FontSize(a.metrics.fontCaption).TextColor(p.text3).Width(24).TextAlign(ui.End)
+			ui.Row(c).Padding(space2, space4).AlignItems(ui.Start).Gap(space8).Children(func() {
+				a.listNumber(c, i+1, len(entries))
 				valueColor := p.text2
 				if missing {
 					valueColor = p.danger

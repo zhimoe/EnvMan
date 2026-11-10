@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"runtime"
 	"strings"
 
@@ -142,7 +143,8 @@ func (a *App) scopePill(c *ui.Context, scope Scope) {
 }
 
 // spansForText returns spans that highlight %VAR% references and the search
-// query. base is the ordinary text color.
+// query. base is the ordinary text color. Keep backgrounds square: MyGo
+// expands rounded span backgrounds outside their text bounds.
 func (a *App) spansForText(text, query string, base ui.Color, withRefs bool) []ui.Span {
 	p := a.pal
 	refColor := p.accent
@@ -155,7 +157,7 @@ func (a *App) spansForText(text, query string, base ui.Color, withRefs bool) []u
 			return
 		}
 		if q == "" {
-			spans = append(spans, ui.Span{Text: s, Color: color, Background: bg, Radius: 2})
+			spans = append(spans, ui.Span{Text: s, Color: color, Background: bg})
 			return
 		}
 		lower := strings.ToLower(s)
@@ -167,13 +169,13 @@ func (a *App) spansForText(text, query string, base ui.Color, withRefs bool) []u
 			}
 			i += pos
 			if i > pos {
-				spans = append(spans, ui.Span{Text: s[pos:i], Color: color, Background: bg, Radius: 2})
+				spans = append(spans, ui.Span{Text: s[pos:i], Color: color, Background: bg})
 			}
-			spans = append(spans, ui.Span{Text: s[i : i+len(q)], Color: color, Background: p.hit, Radius: 2})
+			spans = append(spans, ui.Span{Text: s[i : i+len(q)], Color: color, Background: p.hit})
 			pos = i + len(q)
 		}
 		if pos < len(s) {
-			spans = append(spans, ui.Span{Text: s[pos:], Color: color, Background: bg, Radius: 2})
+			spans = append(spans, ui.Span{Text: s[pos:], Color: color, Background: bg})
 		}
 	}
 
@@ -203,7 +205,7 @@ func (a *App) spansForText(text, query string, base ui.Color, withRefs bool) []u
 		// A reference gets its accent background; query matching inside it
 		// still wins for the matched runes.
 		if q == "" || !strings.Contains(strings.ToLower(ref), q) {
-			spans = append(spans, ui.Span{Text: ref, Color: refColor, Background: refBg, Radius: 2})
+			spans = append(spans, ui.Span{Text: ref, Color: refColor, Background: refBg})
 		} else {
 			addRun(ref, refColor, refBg)
 		}
@@ -323,4 +325,17 @@ func (a *App) checkBox(c *ui.Context, checked, mixed bool, label string, onToggl
 	if box.Clicked() && onToggle != nil {
 		onToggle()
 	}
+}
+
+// numberColumnWidth keeps a whole list aligned, including three-digit indices
+// and enlarged system text. Measure with the same font used by the numbers.
+func numberColumnWidth(c *ui.Context, count int, size float32) float32 {
+	digits := max(3, len(fmt.Sprint(count)))
+	width, _ := c.MeasureText(0, ui.Span{Text: strings.Repeat("0", digits), Font: monoFont, Size: size})
+	return max(space24, width)
+}
+
+func (a *App) listNumber(c *ui.Context, index, count int) {
+	ui.Textf(c, "%02d", index).Font(monoFont).FontSize(a.metrics.fontCaption).
+		TextColor(a.pal.text3).Width(numberColumnWidth(c, count, a.metrics.fontCaption)).TextAlign(ui.End).SingleLine()
 }

@@ -13,8 +13,7 @@ import (
 // computation below, so that the pane fills the viewport exactly when its
 // longest line fits.
 const (
-	batchGutterWidth  float32 = 22
-	batchGutterGap    float32 = space6
+	batchGutterGap    float32 = space8
 	batchBoxPadV      float32 = space6
 	batchBoxPadH      float32 = space2
 	batchBoxBorder    float32 = 1
@@ -136,17 +135,17 @@ func (a *App) batchView(c *ui.Context) {
 				})
 				ui.Column(c).Grow(1).FillWidth().Padding(batchBodyPadV, batchBodyPadH).Children(func() {
 					lineCount := strings.Count(b.text, "\n") + 1
-					textWidth, textHeight := a.batchEditorViewport(c)
+					textWidth, textHeight := a.batchEditorViewport(c, b.text)
 					textWidth = a.batchEditorTextWidth(c, b.text)
 					ui.Box(c).Grow(1).FillWidth().Background(p.surface).Border(1, p.line).Radius(radiusOverlay).Clip().Children(func() {
 						ui.Scroll(c).Grow(1).FillWidth().Children(func() {
 							ui.Row(c).FillWidth().AlignItems(ui.Start).
 								Gap(batchGutterGap).Padding(batchBoxPadV, batchBoxPadH).Children(func() {
-								ui.Column(c).Width(batchGutterWidth).Gap(0).Children(func() {
+								ui.Column(c).Width(numberColumnWidth(c, lineCount, a.metrics.fontBody)).Gap(0).Children(func() {
 									for i := 1; i <= lineCount; i++ {
 										ui.Textf(c, "%d", i).Font(monoFont).FontSize(a.metrics.fontBody).
 											FixedLineHeight(a.metrics.lineBody).Height(a.metrics.lineBody).
-											Width(batchGutterWidth).TextColor(p.text3).TextAlign(ui.End)
+											Width(numberColumnWidth(c, lineCount, a.metrics.fontBody)).TextColor(p.text3).TextAlign(ui.End)
 									}
 								})
 								ui.ScrollHorizontal(c).Grow(1).Children(func() {
@@ -200,14 +199,14 @@ func (a *App) batchView(c *ui.Context) {
 							LetterSpacing(0.5).TextColor(p.text3).Padding(space2, space4)
 						for i, e := range entries {
 							isNew := !containsFold(info.original, e)
-							a.batchEntry(c, i+1, e, isNew, false)
+							a.batchEntry(c, i+1, max(len(entries), len(info.removed)), e, isNew, false)
 						}
 					}
 					if len(info.removed) > 0 {
 						ui.Textf(c, "将移除  %d", len(info.removed)).FontSize(a.metrics.fontCaption).FontWeight(weightSemibold).
 							LetterSpacing(0.5).TextColor(p.text3).Padding(space8, space4, space2, space4)
 						for i, e := range info.removed {
-							a.batchEntry(c, i+1, e, false, true)
+							a.batchEntry(c, i+1, max(len(entries), len(info.removed)), e, false, true)
 						}
 					}
 				})
@@ -254,7 +253,7 @@ func (a *App) batchCallout(c *ui.Context, ic *ui.SVG, bg, fg ui.Color, text stri
 	})
 }
 
-func (a *App) batchEntry(c *ui.Context, index int, text string, added, removed bool) {
+func (a *App) batchEntry(c *ui.Context, index, count int, text string, added, removed bool) {
 	p := a.pal
 	bg := p.surface
 	border := p.line
@@ -272,12 +271,11 @@ func (a *App) batchEntry(c *ui.Context, index int, text string, added, removed b
 		fg = p.danger
 		mark = "−"
 	}
-	ui.Row(c).FillWidth().Margin(0, 0, space2, 0).Padding(space4, space2).Radius(radiusControl).Background(bg).Border(1, border).
-		AlignItems(ui.Center).Gap(space2).Children(func() {
-		ui.Textf(c, "%02d", index).Font(monoFont).FontSize(a.metrics.fontCaption).TextColor(p.text3).Width(16).TextAlign(ui.End)
-		if mark != "" {
-			ui.Text(c, mark).Font(monoFont).FontSize(a.metrics.fontSmall).TextColor(fg).Width(10).TextAlign(ui.Center)
-		}
+	ui.Row(c).FillWidth().Margin(0, 0, space2, 0).Padding(space4, space8).Radius(radiusControl).Background(bg).Border(1, border).
+		AlignItems(ui.Start).Gap(space8).Children(func() {
+		a.listNumber(c, index, count)
+		// Reserve the status column even for unchanged entries.
+		ui.Text(c, mark).Font(monoFont).FontSize(a.metrics.fontSmall).TextColor(fg).Width(a.metrics.fontSmall).TextAlign(ui.Center)
 		ui.Text(c, text).Font(monoFont).FontSize(a.metrics.fontSmall).TextColor(fg).Grow(1).MinWidth(0)
 	})
 }
@@ -285,7 +283,7 @@ func (a *App) batchEntry(c *ui.Context, index int, text string, added, removed b
 // batchEditorTextWidth returns how wide the batch editor's text pane is: as
 // wide as its widest line, but filling the viewport when that fits.
 func (a *App) batchEditorTextWidth(c *ui.Context, text string) float32 {
-	viewport, _ := a.batchEditorViewport(c)
+	viewport, _ := a.batchEditorViewport(c, text)
 	widest, widestRunes := "", 0
 	for line := range strings.SplitSeq(text, "\n") {
 		if n := utf8.RuneCountInString(line); n > widestRunes {
@@ -306,14 +304,14 @@ func (a *App) batchEditorTextWidth(c *ui.Context, text string) float32 {
 // from the window's size and the measurements of the pane around it, so that
 // the pane fills it: the text pane scrolls sideways only as long as a line
 // is wider than this, and is as tall as this at least.
-func (a *App) batchEditorViewport(c *ui.Context) (width, height float32) {
+func (a *App) batchEditorViewport(c *ui.Context, text string) (width, height float32) {
 	w, h := c.Size()
 	titleBar := c.TitleBar().Height
 	if titleBar < a.metrics.titleBarH {
 		titleBar = a.metrics.titleBarH
 	}
 	left := (w - batchDividerWidth) * batchLeftFlex / (batchLeftFlex + batchRightFlex)
-	width = left - 2*batchBodyPadH - 2*batchBoxBorder - 2*batchBoxPadH - batchGutterWidth - batchGutterGap
+	width = left - 2*batchBodyPadH - 2*batchBoxBorder - 2*batchBoxPadH - numberColumnWidth(c, strings.Count(text, "\n")+1, a.metrics.fontBody) - batchGutterGap
 	height = h - titleBar - a.metrics.pageHeaderH - a.metrics.paneHeaderH - a.metrics.barH -
 		2*batchBodyPadV - 2*batchBoxBorder - 2*batchBoxPadV
 	if width < 120 {

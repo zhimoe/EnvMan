@@ -80,6 +80,9 @@ go mod tidy
 go mod vendor
 ```
 
+列表序号、缩进与引用高亮的复检与修复见
+[列表对齐复检记录](doc/list-alignment/ui-list-alignment.md)。
+
 ## 界面尺寸约定
 
 界面样式按职责集中管理：`internal/app/metrics.go` 管理字号、间距和控件高度，
